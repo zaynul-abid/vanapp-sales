@@ -89,7 +89,7 @@ class CustomerController extends Controller
             ->orWhere('email', 'LIKE', "%{$query}%")
             ->orWhere('phone', 'LIKE', "%{$query}%")
             ->where('is_active', 1)
-            ->select('customer_id', 'name', 'address', 'phone', 'email')
+            ->select('id','customer_id', 'name', 'address', 'phone', 'email')
             ->limit(10)
             ->get();
 

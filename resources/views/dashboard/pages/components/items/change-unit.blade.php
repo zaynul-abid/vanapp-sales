@@ -52,13 +52,25 @@
                             </select>
                         </div>
 
+{{--                        <div>--}}
+{{--                            <label for="quantity" class="block text-sm font-medium text-blue-500 mb-1">Quantity</label>--}}
+{{--                            <input type="number" name="quantity" id="quantity" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" min="1" required>--}}
+{{--                        </div>--}}
+
                         <div>
-                            <label for="quantity" class="block text-sm font-medium text-blue-500 mb-1">Quantity</label>
-                            <input type="number" name="quantity" id="quantity" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" min="1" required>
+                            <label for="wholesale_rate" class="block text-sm font-medium text-blue-500 mb-1">Wholesale Rate</label>
+                            <input type="number" name="wholesale_price" id="wholesale_rate" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" min="1" required>
+                        </div>
+
+                        <div>
+                            <label for="retail_rate" class="block text-sm font-medium text-blue-500 mb-1">Retail Rate</label>
+                            <input type="number" name="retail_price" id="retail_rate" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" min="1" required>
                         </div>
                     </div>
 
                     <input type="hidden" name="name" value="{{ $unitItem->name }}">
+                    <input type="hidden" name="tax_percentage" value="{{ $unitItem->tax->tax_percentage }}">
+                    <input type="hidden" name="current_stock" value="{{ $unitItem->current_stock }}">
 
                     <!-- Buttons -->
                     <div class="flex justify-between">
@@ -89,6 +101,8 @@
                             <th class="p-3">Name</th>
                             <th class="p-3">Unit</th>
                             <th class="p-3">Quantity</th>
+                            <th class="p-3">Wholesale Rate</th>
+                            <th class="p-3">Retail Rate</th>
                             <th class="p-3">Type</th>
                             <th class="p-3">Action</th>
                         </tr>
@@ -100,6 +114,8 @@
                                 <td class="p-3">{{ $changedunit->name }}</td>
                                 <td class="p-3">{{ $changedunit->unit_name }}</td>
                                 <td class="p-3">{{ $changedunit->quantity }}</td>
+                                <td class="p-3">{{ $changedunit->wholesale_price }}</td>
+                                <td class="p-3">{{ $changedunit->retail_price }}</td>
                                 <td class="p-3">{{ $changedunit->type }}</td>
                                 <td class="p-3">
                                     <a href="{{ route('unit.item.delete', $changedunit->id) }}"

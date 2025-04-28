@@ -36,7 +36,11 @@
 <div class="max-w-7xl mx-auto bg-white p-8 rounded-lg shadow-md">
     <h1 class="text-3xl font-bold text-gray-800 mb-8">Sale Entry</h1>
 
-    <form action="/submit-sale" method="POST" onsubmit="return validateForm()">
+    <form action="{{route('sales.store')}}" method="POST" onsubmit="return validateForm()">
+        @csrf
+        <input type="hidden" name="user_id" value="{{ auth()->user()->id }}">
+
+
         <!-- Sale Master Section -->
         <h2 class="text-2xl font-semibold text-gray-700 mb-6">Sale Master</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -75,24 +79,24 @@
             <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
                 <div>
                     <label for="item_name_input" class="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
-                    <input type="text" id="item_name_input" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <input type="text" id="item_name_input" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" >
                 </div>
                 <div>
                     <label for="item_id_input" class="block text-sm font-medium text-gray-700 mb-1">Item ID</label>
-                    <input type="text" id="item_id_input" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <input type="text" id="item_id_input" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" >
                 </div>
 
                 <div>
                     <label for="rate_input" class="block text-sm font-medium text-gray-700 mb-1">Rate</label>
-                    <input type="number" id="rate_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <input type="number" id="rate_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" >
                 </div>
                 <div>
                     <label for="quantity_input" class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
-                    <input type="number" id="quantity_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <input type="number" id="quantity_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" >
                 </div>
                 <div>
                     <label for="unit_input" class="block text-sm font-medium text-gray-700 mb-1">unit</label>
-                    <input type="text" id="unit_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <input type="text" id="unit_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" >
                 </div>
                 <div>
                     <label for="tax_percentage_input" class="block text-sm font-medium text-gray-700 mb-1">Tax %</label>
@@ -206,7 +210,133 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
 <script>
+    // ITEM SEARCH FUNCTIONALITY - START
+    $(document).ready(function() {
+        // Create suggestions container for items
+        $('body').append('<div id="item_suggestions" class="hidden absolute z-10 mt-1 bg-white shadow-lg rounded-md border border-gray-300 max-h-60 overflow-auto" style="width: 300px;"></div>');
 
+        // Position the suggestions box below the item name input
+        $('#item_name_input').on('focus', function() {
+            const inputRect = this.getBoundingClientRect();
+            $('#item_suggestions').css({
+                'top': inputRect.bottom + window.scrollY + 'px',
+                'left': inputRect.left + window.scrollX + 'px',
+                'width': inputRect.width + 'px'
+            });
+        });
+
+        let itemCurrentFocus = -1;
+
+        $('#item_name_input').on('input', function() {
+            let query = $(this).val().trim();
+            if (query.length >= 2) {
+                $.ajax({
+                    url: '/search-items',
+                    method: 'GET',
+                    data: { query: query },
+                    dataType: 'json',
+                    success: function(response) {
+                        let suggestions = $('#item_suggestions');
+                        suggestions.empty();
+                        itemCurrentFocus = -1;
+
+                        if (response.length > 0) {
+                            response.forEach(function(item) {
+                                suggestions.append(
+                                    `<div class="item-suggestion p-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100"
+                                        data-id="${item.id}"
+                                        data-name="${item.name}"
+                                        data-retail="${item.retail_price}"
+                                        data-wholesale="${item.wholesale_price}"
+                                        data-unit="${item.unit_name}"
+                                        data-tax="${item.tax_percentage}">
+                                        <div class="font-medium">${item.name}</div>
+                                        <div class="text-sm text-gray-600">
+                                            ${item.unit_name} |
+                                            Retail: ₹${item.retail_price} |
+                                            Wholesale: ₹${item.wholesale_price} |
+                                            Tax: ${item.tax_percentage}%
+                                        </div>
+                                    </div>`
+                                );
+                            });
+                            suggestions.removeClass('hidden');
+                        } else {
+                            suggestions.addClass('hidden');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching item data:', error);
+                    }
+                });
+            } else {
+                $('#item_suggestions').addClass('hidden');
+            }
+        });
+
+        // Handle keyboard navigation for items
+        $('#item_name_input').keydown(function(e) {
+            let suggestions = $('#item_suggestions');
+            let items = suggestions.find('.item-suggestion');
+
+            if (e.keyCode == 40) { // Down arrow
+                itemCurrentFocus++;
+                if (itemCurrentFocus >= items.length) itemCurrentFocus = 0;
+                setActiveItem(items);
+                e.preventDefault();
+            } else if (e.keyCode == 38) { // Up arrow
+                itemCurrentFocus--;
+                if (itemCurrentFocus < 0) itemCurrentFocus = items.length - 1;
+                setActiveItem(items);
+                e.preventDefault();
+            } else if (e.keyCode == 13) { // Enter
+                if (itemCurrentFocus > -1) {
+                    e.preventDefault();
+                    selectItem(items.eq(itemCurrentFocus));
+                }
+            }
+        });
+
+        function setActiveItem(items) {
+            items.removeClass('bg-blue-100');
+            if (itemCurrentFocus >= 0 && itemCurrentFocus < items.length) {
+                items.eq(itemCurrentFocus).addClass('bg-blue-100');
+                items.eq(itemCurrentFocus)[0].scrollIntoView({
+                    block: 'nearest',
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        function selectItem(item) {
+            $('#item_name_input').val(item.data('name'));
+            $('#item_id_input').val(item.data('id'));
+            $('#rate_input').val(item.data('retail')); // Default to retail price
+            $('#unit_input').val(item.data('unit'));
+            $('#tax_percentage_input').val(item.data('tax'));
+            // Store both prices in data attributes
+            $('#rate_input').data('retail', item.data('retail'));
+            $('#rate_input').data('wholesale', item.data('wholesale'));
+            $('#item_suggestions').addClass('hidden');
+            itemCurrentFocus = -1;
+            $('#quantity_input').focus();
+        }
+
+        // Handle mouse selection for items
+        $(document).on('click', '#item_suggestions .item-suggestion', function() {
+            selectItem($(this));
+        });
+
+        // Hide item suggestions when clicking elsewhere
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#item_name_input, #item_suggestions').length) {
+                $('#item_suggestions').addClass('hidden');
+            }
+        });
+    });
+    // ITEM SEARCH FUNCTIONALITY - END
+
+    // CUSTOMER SEARCH FUNCTIONALITY - START
     $(document).ready(function() {
         let currentFocus = -1;
 
@@ -227,7 +357,7 @@
                             response.forEach(function(customer) {
                                 suggestions.append(
                                     `<div class="customer-item"
-                                    data-id="${customer.customer_id}"
+                                    data-id="${customer.id}"
                                     data-name="${customer.name}"
                                     data-address="${customer.address}"
                                     data-phone="${customer.phone}"
@@ -288,15 +418,13 @@
         }
 
         function selectCustomer(item) {
+            console.log('Selected customer ID:', item.data('id'));
+            console.log('Selected customer ID:', item.data('name'));
             $('#customer_name').val(item.data('name'));
             $('#customer_id').val(item.data('id'));
             $('#customer_address').val(item.data('address'));
             $('#customer_suggestions').addClass('hidden');
             currentFocus = -1;
-
-            // You can populate additional fields if needed:
-            // $('#customer_phone').val(item.data('phone'));
-            // $('#customer_email').val(item.data('email'));
         }
 
         // Handle mouse selection
@@ -311,22 +439,24 @@
             }
         });
     });
-
-
-
-
+    // CUSTOMER SEARCH FUNCTIONALITY - END
 
     function addItemToTable() {
         const itemId = document.getElementById('item_id_input').value;
         const itemName = document.getElementById('item_name_input').value;
-        const rate = parseFloat(document.getElementById('rate_input').value) || 0;
+        let rate = parseFloat(document.getElementById('rate_input').value) || 0;
         const quantity = parseFloat(document.getElementById('quantity_input').value) || 0;
+        const unit = document.getElementById('unit_input').value || '';
         const taxPercentage = parseFloat(document.getElementById('tax_percentage_input').value) || 0;
+        const retailPrice = parseFloat($('#rate_input').data('retail')) || 0;
+        const wholesalePrice = parseFloat($('#rate_input').data('wholesale')) || 0;
 
-        if (!itemId || !itemName || rate <= 0 || quantity <= 0) {
+        if (!itemId || !itemName || rate <= 0 || quantity <= 0 || !unit) {
             alert('Please fill in all required item fields with valid values.');
             return;
         }
+
+        const priceType = rate === retailPrice ? 'Retail' : 'Wholesale';
 
         const grossAmount = rate * quantity;
         const taxAmount = grossAmount * (taxPercentage / 100);
@@ -340,11 +470,20 @@
                 <td class="py-2 px-4 border-b">
                     <input type="hidden" name="items[][item_name]" value="${itemName}">${itemName}
                 </td>
-                <td class="py-2 px-4 border-b">
-                    <input type="hidden" name="items[][rate]" value="${rate.toFixed(2)}">${rate.toFixed(2)}
+                <td class="py-2 px-4 border-b relative">
+                    <div class="rate-display">${rate.toFixed(2)}</div>
+                    <div class="price-type-selector hidden absolute bg-white border border-gray-300 shadow-lg z-10 mt-1 rounded" style="width: 200px;">
+                        <div class="p-2 hover:bg-blue-50 cursor-pointer" data-price="${retailPrice}">Retail: ${retailPrice.toFixed(2)}</div>
+                        <div class="p-2 hover:bg-blue-50 cursor-pointer" data-price="${wholesalePrice}">Wholesale: ${wholesalePrice.toFixed(2)}</div>
+                    </div>
+                    <input type="hidden" name="items[][rate]" value="${rate.toFixed(2)}">
+                    <input type="hidden" name="items[][price_type]" value="${priceType}">
                 </td>
                 <td class="py-2 px-4 border-b">
                     <input type="hidden" name="items[][quantity]" value="${quantity.toFixed(2)}">${quantity.toFixed(2)}
+                </td>
+                <td class="py-2 px-4 border-b">
+                    <input type="hidden" name="items[][unit]" value="${unit}">${unit}
                 </td>
                 <td class="py-2 px-4 border-b">
                     <input type="hidden" name="items[][tax_percentage]" value="${taxPercentage.toFixed(2)}">${taxPercentage.toFixed(2)}
@@ -359,15 +498,42 @@
 
         document.getElementById('item-rows').insertAdjacentHTML('beforeend', row);
 
+        // Add click handler for rate cells
+        const rateDisplay = $('.rate-display').last();
+        const priceSelector = rateDisplay.next('.price-type-selector');
+
+        rateDisplay.on('click', function(e) {
+            e.stopPropagation();
+            $('.price-type-selector').addClass('hidden');
+            priceSelector.toggleClass('hidden');
+        });
+
+        // Add handler for price selection
+        priceSelector.find('div').on('click', function() {
+            const newPrice = parseFloat($(this).data('price'));
+            const row = $(this).closest('tr');
+            row.find('.rate-display').text(newPrice.toFixed(2));
+            row.find('input[name="items[][rate]"]').val(newPrice.toFixed(2));
+            row.find('input[name="items[][price_type]"]').val($(this).text().includes('Retail') ? 'Retail' : 'Wholesale');
+            priceSelector.addClass('hidden');
+            updateTotals();
+        });
+
         // Clear input fields
         document.getElementById('item_id_input').value = '';
         document.getElementById('item_name_input').value = '';
         document.getElementById('rate_input').value = '';
         document.getElementById('quantity_input').value = '';
+        document.getElementById('unit_input').value = '';
         document.getElementById('tax_percentage_input').value = '0.00';
 
         updateTotals();
     }
+
+    // Close price selector when clicking elsewhere
+    $(document).on('click', function() {
+        $('.price-type-selector').addClass('hidden');
+    });
 
     function removeItemRow(button) {
         button.closest('.item-row').remove();

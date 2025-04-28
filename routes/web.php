@@ -70,7 +70,7 @@ Route::middleware(['auth', 'usertype:employee'])->group(function () {
 
     Route::get('/search-customers', [CustomerController::class,'searchCustomers'])->name('search.customers');
 
-
+    Route::get('/search-items', [ItemController::class,'searchItems'])->name('search.items');
 
 });
 

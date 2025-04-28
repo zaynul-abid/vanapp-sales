@@ -76,7 +76,11 @@ class UnitController extends Controller
           'default_item_id'=>$id,
           'name'=>$request->name,
           'unit_name'=>$request->unit_name,
-          'quantity'=>$request->quantity,
+          'quantity'=> $request->quantity,
+          'tax_percentage'=>$request->tax_percentage,
+          'wholesale_price'=>$request->wholesale_price,
+          'retail_price'=>$request->retail_price,
+          'stock'=>$request->current_stock,
           'type'=>'secondary',
       ] ;
       ItemUnitDetail::create($data);

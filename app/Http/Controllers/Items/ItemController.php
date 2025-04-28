@@ -55,17 +55,22 @@ class ItemController extends Controller
             $data['image'] = $request->file('image')->store('items', 'public');
         }
 
-       $item= Item::create($data);
+          $item= Item::create($data);
+
         $unit = Unit::find($request->default_unit_id);
+        $tax = Tax::find($request->tax_id);
 
         $itemUnitDetails = [
             'default_item_id' => $item->id,
-            'name'=> $request->input('name'),
+            'name' => $request->input('name'),
             'unit_name' => $unit->name,
-            'quantity' => 1,
+            'quantity' => '1',
+            'tax_percentage' =>$tax->tax_percentage,
+            'wholesale_price' => $request->input('wholesale_price'),
+            'retail_price' => $request->input('retail_price'),
+            'stock' => $request->input('current_stock'),
             'type' => 'primary',
         ];
-
         ItemUnitDetail::create($itemUnitDetails);
 
         return redirect()->route('items.index')->with('success', 'Item created successfully.');
@@ -118,21 +123,34 @@ class ItemController extends Controller
         // Update or create the ItemUnitDetail record
         $unit = Unit::find($request->default_unit_id);
 
+        $tax = Tax::find($request->tax_id);
+
         $itemUnitDetails = [
             'default_item_id' => $item->id,
             'name' => $request->input('name'),
             'unit_name' => $unit->name,
-            'quantity' => 1,
+            'quantity' => '1',
+            'tax_percentage' =>$tax->tax_percentage,
+            'wholesale_price' => $request->input('wholesale_price'),
+            'retail_price' => $request->input('retail_price'),
+            'stock' => $request->input('current_stock'),
             'type' => 'primary',
         ];
 
         // Update if exists, otherwise create
-        ItemUnitDetail::updateOrCreate(
-            ['default_item_id' => $item->id, 'type' => 'primary'],
-            $itemUnitDetails
-        );
+        $itemUnitDetail = ItemUnitDetail::where('default_item_id', $item->id)
+            ->where('type', 'primary')
+            ->first();
 
-        return redirect()->route('items.index')->with('success', 'Item updated successfully.');
+        if ($itemUnitDetail) {
+            // If found, update it
+            $itemUnitDetail->update($itemUnitDetails);
+        } else {
+            // If not found, create new
+            ItemUnitDetail::create($itemUnitDetails);
+        }
+
+            return redirect()->route('items.index')->with('success', 'Item updated successfully.');
     }
 
     public function destroy(Item $item)
@@ -150,5 +168,26 @@ class ItemController extends Controller
         });
 
         return redirect()->route('items.index')->with('success', 'Item deleted successfully.');
+    }
+
+    public function searchItems(Request $request)
+    {
+        $term = $request->input('term');
+
+        $items = DB::table('item_unit_details')
+            ->where('name', 'LIKE', '%'.$term.'%')
+            ->select(
+                'id',
+                'name',
+                'unit_name',
+                'quantity',
+                'tax_percentage',
+                'retail_price',
+                'wholesale_price' // Add this line
+            )
+            ->limit(10)
+            ->get();
+
+        return response()->json($items);
     }
 }

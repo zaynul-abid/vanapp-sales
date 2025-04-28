@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class ItemUnitDetail extends Model
 {
 
+    use SoftDeletes;
     protected $table = 'item_unit_details';
     protected $fillable = [
         'default_item_id',
@@ -15,6 +16,10 @@ class ItemUnitDetail extends Model
         'unit_name',
         'quantity',
         'type',
+        'stock',
+        'retail_price',
+        'wholesale_price',
+        'tax_percentage',
     ];
 
     public function item(){
