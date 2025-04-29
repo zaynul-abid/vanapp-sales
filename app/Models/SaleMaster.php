@@ -26,6 +26,7 @@ class SaleMaster extends Model
         'narration',
         'cash_amount',
         'credit_amount',
+        'card_amount',
         'upi_amount',
         'financial_year',
         'van_id',

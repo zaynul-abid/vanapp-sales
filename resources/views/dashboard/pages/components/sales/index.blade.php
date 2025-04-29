@@ -198,24 +198,29 @@
                 <label for="payment_option" class="block text-sm font-medium text-gray-700 mb-1">Payment Option</label>
                 <select id="payment_option" name="payment_option" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="updatePaymentFields()">
                     <option value="Cash">Cash</option>
-                    <option value="Credit">Credit</option>
                     <option value="UPI">UPI</option>
+                    <option value="Card">Card</option>
+                    <option value="Credit">Credit</option>
                     <option value="Other">Other</option>
                 </select>
             </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div>
                 <label for="cash_amount" class="block text-sm font-medium text-gray-700 mb-1">Cash</label>
                 <input type="number" id="cash_amount" name="cash_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="0.00" oninput="updateTotalPayment()">
             </div>
             <div>
-                <label for="credit_amount" class="block text-sm font-medium text-gray-700 mb-1">Credit</label>
-                <input type="number" id="credit_amount" name="credit_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="0.00" oninput="updateTotalPayment()">
-            </div>
-            <div>
                 <label for="upi_amount" class="block text-sm font-medium text-gray-700 mb-1">UPI</label>
                 <input type="number" id="upi_amount" name="upi_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="0.00" oninput="updateTotalPayment()">
+            </div>
+            <div>
+                <label for="card_amount" class="block text-sm font-medium text-gray-700 mb-1">Card</label>
+                <input type="number" id="card_amount" name="card_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="0.00" oninput="updateTotalPayment()">
+            </div>
+            <div>
+                <label for="credit_amount" class="block text-sm font-medium text-gray-700 mb-1">Credit</label>
+                <input type="number" id="credit_amount" name="credit_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="0.00" oninput="updateTotalPayment()">
             </div>
         </div>
         <div class="mt-4">
@@ -663,38 +668,60 @@
         const paymentOption = document.getElementById('payment_option').value;
         const netTotalAmount = parseFloat(document.getElementById('net_total_amount').value) || 0;
         const cashInput = document.getElementById('cash_amount');
-        const creditInput = document.getElementById('credit_amount');
         const upiInput = document.getElementById('upi_amount');
+        const cardInput = document.getElementById('card_amount');
+        const creditInput = document.getElementById('credit_amount');
 
         document.getElementById('sale_type').value = paymentOption;
 
         if (paymentOption === 'Cash') {
             cashInput.value = netTotalAmount.toFixed(2);
+            upiInput.value = '0.00';
+            cardInput.value = '0.00';
             creditInput.value = '0.00';
-            upiInput.value = '0.00';
-        } else if (paymentOption === 'Credit') {
-            cashInput.value = '0.00';
-            creditInput.value = netTotalAmount.toFixed(2);
-            upiInput.value = '0.00';
         } else if (paymentOption === 'UPI') {
             cashInput.value = '0.00';
-            creditInput.value = '0.00';
             upiInput.value = netTotalAmount.toFixed(2);
+            cardInput.value = '0.00';
+            creditInput.value = '0.00';
+        } else if (paymentOption === 'Card') {
+            cashInput.value = '0.00';
+            upiInput.value = '0.00';
+            cardInput.value = netTotalAmount.toFixed(2);
+            creditInput.value = '0.00';
+        } else if (paymentOption === 'Credit') {
+            cashInput.value = '0.00';
+            upiInput.value = '0.00';
+            cardInput.value = '0.00';
+            creditInput.value = netTotalAmount.toFixed(2);
         } else if (paymentOption === 'Other') {
             cashInput.value = '0.00';
-            creditInput.value = '0.00';
             upiInput.value = '0.00';
+            cardInput.value = '0.00';
+            creditInput.value = '0.00';
         }
 
         updateTotalPayment();
     }
 
     function updateTotalPayment() {
+        const netTotalAmount = parseFloat(document.getElementById('net_total_amount').value) || 0;
         const cashAmount = parseFloat(document.getElementById('cash_amount').value) || 0;
-        const creditAmount = parseFloat(document.getElementById('credit_amount').value) || 0;
         const upiAmount = parseFloat(document.getElementById('upi_amount').value) || 0;
+        const cardAmount = parseFloat(document.getElementById('card_amount').value) || 0;
+        const creditInput = document.getElementById('credit_amount');
 
-        const totalPayment = cashAmount + creditAmount + upiAmount;
+        const nonCreditTotal = cashAmount + upiAmount + cardAmount;
+
+        // If non-credit fields sum to less than net total, auto-fill credit with the remaining amount
+        if (nonCreditTotal < netTotalAmount) {
+            const remainingAmount = netTotalAmount - nonCreditTotal;
+            creditInput.value = remainingAmount.toFixed(2);
+        } else {
+            creditInput.value = '0.00';
+        }
+
+        const totalPayment = nonCreditTotal + parseFloat(creditInput.value);
         document.getElementById('total_payment_amount').value = totalPayment.toFixed(2);
     }
 
