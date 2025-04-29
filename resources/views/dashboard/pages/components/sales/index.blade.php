@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -173,7 +172,7 @@
                 <input type="number" id="discount" name="discount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="0.00" oninput="updateTotals()">
             </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div>
                 <label for="net_gross_amount" class="block text-sm font-medium text-gray-700 mb-1">Net Gross Amount</label>
                 <input type="number" id="net_gross_amount" name="net_gross_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
@@ -181,6 +180,10 @@
             <div>
                 <label for="net_tax_amount" class="block text-sm font-medium text-gray-700 mb-1">Net Tax Amount</label>
                 <input type="number" id="net_tax_amount" name="net_tax_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
+            </div>
+            <div>
+                <label for="round_off" class="block text-sm font-medium text-gray-700 mb-1">Round Off</label>
+                <input type="number" id="round_off" name="round_off" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
             </div>
             <div>
                 <label for="net_total_amount" class="block text-sm font-medium text-gray-700 mb-1">Net Total Amount</label>
@@ -641,14 +644,17 @@
             });
         }
 
-        const netTotalAmount = netGrossAmount + netTaxAmount;
+        const preRoundNetTotalAmount = netGrossAmount + netTaxAmount;
+        const roundedNetTotalAmount = Math.round(preRoundNetTotalAmount);
+        const roundOff = roundedNetTotalAmount - preRoundNetTotalAmount;
 
         document.getElementById('gross_amount').value = grossAmount.toFixed(2);
         document.getElementById('tax_amount').value = taxAmount.toFixed(2);
         document.getElementById('total_amount').value = totalAmount.toFixed(2);
         document.getElementById('net_gross_amount').value = netGrossAmount.toFixed(2);
         document.getElementById('net_tax_amount').value = netTaxAmount.toFixed(2);
-        document.getElementById('net_total_amount').value = netTotalAmount.toFixed(2);
+        document.getElementById('round_off').value = roundOff.toFixed(2);
+        document.getElementById('net_total_amount').value = roundedNetTotalAmount.toFixed(2);
 
         updatePaymentFields();
     }
@@ -707,4 +713,3 @@
 </script>
 </body>
 </html>
-```
