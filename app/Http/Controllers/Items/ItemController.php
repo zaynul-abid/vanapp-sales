@@ -30,7 +30,6 @@ class ItemController extends Controller
 
     public function store(Request $request)
     {
-
         $request->validate([
             'name' => 'required|string|max:255',
             'default_category_id' => 'required|exists:categories,id',
@@ -40,7 +39,6 @@ class ItemController extends Controller
             'wholesale_price' => 'required|numeric',
             'retail_price' => 'required|numeric',
             'opening_stock' => 'required|numeric',
-            'current_stock' => 'required|numeric',
             'image' => 'nullable|image|max:2048',
             'status' => 'required|boolean',
         ]);
@@ -48,14 +46,17 @@ class ItemController extends Controller
         $data = $request->only([
             'name', 'default_category_id', 'default_unit_id', 'tax_id',
             'purchase_price', 'wholesale_price', 'retail_price',
-            'opening_stock', 'current_stock', 'status'
+            'opening_stock', 'status'
         ]);
+
+        // Set current_stock equal to opening_stock
+        $data['current_stock'] = $request->input('opening_stock');
 
         if ($request->hasFile('image')) {
             $data['image'] = $request->file('image')->store('items', 'public');
         }
 
-          $item= Item::create($data);
+        $item = Item::create($data);
 
         $unit = Unit::find($request->default_unit_id);
         $tax = Tax::find($request->tax_id);
@@ -65,10 +66,10 @@ class ItemController extends Controller
             'name' => $request->input('name'),
             'unit_name' => $unit->name,
             'quantity' => '1',
-            'tax_percentage' =>$tax->tax_percentage,
+            'tax_percentage' => $tax ? $tax->tax_percentage : 0,
             'wholesale_price' => $request->input('wholesale_price'),
             'retail_price' => $request->input('retail_price'),
-            'stock' => $request->input('current_stock'),
+            'stock' => $data['current_stock'],
             'type' => 'primary',
         ];
         ItemUnitDetail::create($itemUnitDetails);
@@ -100,7 +101,6 @@ class ItemController extends Controller
             'wholesale_price' => 'required|numeric',
             'retail_price' => 'required|numeric',
             'opening_stock' => 'required|numeric',
-            'current_stock' => 'required|numeric',
             'image' => 'nullable|image|max:2048',
             'status' => 'required|boolean',
         ]);
@@ -108,8 +108,11 @@ class ItemController extends Controller
         $data = $request->only([
             'name', 'default_category_id', 'default_unit_id', 'tax_id',
             'purchase_price', 'wholesale_price', 'retail_price',
-            'opening_stock', 'current_stock', 'status'
+            'opening_stock', 'status'
         ]);
+
+        // Add new opening_stock to existing current_stock
+        $data['current_stock'] = $item->current_stock + $request->input('opening_stock');
 
         if ($request->hasFile('image')) {
             if ($item->image) {
@@ -122,7 +125,6 @@ class ItemController extends Controller
 
         // Update or create the ItemUnitDetail record
         $unit = Unit::find($request->default_unit_id);
-
         $tax = Tax::find($request->tax_id);
 
         $itemUnitDetails = [
@@ -130,10 +132,10 @@ class ItemController extends Controller
             'name' => $request->input('name'),
             'unit_name' => $unit->name,
             'quantity' => '1',
-            'tax_percentage' =>$tax->tax_percentage,
+            'tax_percentage' => $tax ? $tax->tax_percentage : 0,
             'wholesale_price' => $request->input('wholesale_price'),
             'retail_price' => $request->input('retail_price'),
-            'stock' => $request->input('current_stock'),
+            'stock' => $data['current_stock'],
             'type' => 'primary',
         ];
 
@@ -143,22 +145,18 @@ class ItemController extends Controller
             ->first();
 
         if ($itemUnitDetail) {
-            // If found, update it
             $itemUnitDetail->update($itemUnitDetails);
         } else {
-            // If not found, create new
             ItemUnitDetail::create($itemUnitDetails);
         }
 
-            return redirect()->route('items.index')->with('success', 'Item updated successfully.');
+        return redirect()->route('items.index')->with('success', 'Item updated successfully.');
     }
 
     public function destroy(Item $item)
     {
         DB::transaction(function () use ($item) {
-
             ItemUnitDetail::where('default_item_id', $item->id)->delete();
-
 
             if ($item->image) {
                 Storage::disk('public')->delete($item->image);
@@ -170,12 +168,14 @@ class ItemController extends Controller
         return redirect()->route('items.index')->with('success', 'Item deleted successfully.');
     }
 
+
     public function searchItems(Request $request)
     {
-        $term = $request->input('term');
+        $query = $request->input('query'); // Changed from 'term' to 'query'
 
         $items = DB::table('item_unit_details')
-            ->where('name', 'LIKE', '%'.$term.'%')
+            ->where('name', 'LIKE', '%'.$query.'%')
+            ->orWhere('id', 'LIKE', '%'.$query.'%') // Also search by ID
             ->select(
                 'id',
                 'name',
@@ -183,7 +183,7 @@ class ItemController extends Controller
                 'quantity',
                 'tax_percentage',
                 'retail_price',
-                'wholesale_price' // Add this line
+                'wholesale_price'
             )
             ->limit(10)
             ->get();

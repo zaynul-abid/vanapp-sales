@@ -10,211 +10,201 @@
 @endsection
 
 @section('content')
-    <div class="min-h-screen bg-gray-100 text-gray-900 p-6">
-        <div class="container mx-auto max-w-4xl">
-            <!-- Conversion Form Card -->
-            <div class="bg-white rounded-xl shadow-xl p-6 mb-8 border border-blue-200 transform hover:scale-105 transition-transform duration-300">
-                <h2 class="text-2xl font-bold text-blue-600 mb-6 flex items-center">
-                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m-16 6h12m0 0l-4-4m4 4l-4 4"></path>
-                    </svg>
-                    Unit Conversion
-                </h2>
+    <div class="container py-3 px-2 px-md-3" style="max-width: 600px;">
+        <!-- Conversion Form Card -->
+        <div class="card shadow-sm p-3 p-md-4 mb-4">
+            <h2 class="card-title mb-3 fs-4 fw-bold d-flex align-items-center">
+                <svg class="me-2" width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m-16 6h12m0 0l-4-4m4 4l-4 4"></path>
+                </svg>
+                Unit Conversion
+            </h2>
 
-                <form action="{{ route('item.create-unit', $unitItem->id) }}" method="POST" id="conversionForm">
-                    @csrf
-                    @method('PUT')
+            <form action="{{ route('item.create-unit', $unitItem->id) }}" method="POST" id="conversionForm">
+                @csrf
+                @method('PUT')
 
-                    <!-- Current Unit Info -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                        <div class="bg-gray-50 p-4 rounded-lg shadow-sm">
-                            <h6 class="text-blue-500 font-semibold">Item</h6>
-                            <p class="text-gray-700">{{ $unitItem->name }}</p>
-                        </div>
-                        <div class="bg-gray-50 p-4 rounded-lg shadow-sm">
-                            <h6 class="text-blue-500 font-semibold">Current Unit</h6>
-                            <p class="text-gray-700">{{ $unitItem->unit->name }}</p>
-                            <input type="hidden" name="base_unit_id" value="{{ $unitItem->unit->id }}">
+                <!-- Current Unit Info -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <div class="bg-light p-3 rounded">
+                            <h6 class="text-primary fw-semibold">Item</h6>
+                            <p class="mb-0">{{ $unitItem->name }}</p>
                         </div>
                     </div>
-
-                    <!-- Conversion Form -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                        <div>
-                            <label for="unit_name" class="block text-sm font-medium text-blue-500 mb-1">Convert To</label>
-                            <select name="unit_name" id="unit_name" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" required>
-                                <option value="">-- Select Unit --</option>
-                                @foreach ($units as $unit)
-                                    @if($unit->id != $unitItem->unit->id)
-                                        <option value="{{ $unit->name }}">{{ $unit->name }}</option>
-                                    @endif
-                                @endforeach
-                            </select>
-                        </div>
-
-{{--                        <div>--}}
-{{--                            <label for="quantity" class="block text-sm font-medium text-blue-500 mb-1">Quantity</label>--}}
-{{--                            <input type="number" name="quantity" id="quantity" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" min="1" required>--}}
-{{--                        </div>--}}
-
-                        <div>
-                            <label for="wholesale_rate" class="block text-sm font-medium text-blue-500 mb-1">Wholesale Rate</label>
-                            <input type="number" name="wholesale_price" id="wholesale_rate" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" min="1" required>
-                        </div>
-
-                        <div>
-                            <label for="retail_rate" class="block text-sm font-medium text-blue-500 mb-1">Retail Rate</label>
-                            <input type="number" name="retail_price" id="retail_rate" class="w-full bg-white border border-gray-300 rounded-lg p-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors" min="1" required>
+                    <div class="col-md-6">
+                        <div class="bg-light p-3 rounded">
+                            <h6 class="text-primary fw-semibold">Current Unit</h6>
+                            <p class="mb-0">{{ $unitItem->unit->name ?? 'N/A' }}</p>
+                            <input type="hidden" name="base_unit_id" value="{{ $unitItem->unit?->id }}">
                         </div>
                     </div>
-
-                    <input type="hidden" name="name" value="{{ $unitItem->name }}">
-                    <input type="hidden" name="tax_percentage" value="{{ $unitItem->tax->tax_percentage }}">
-                    <input type="hidden" name="current_stock" value="{{ $unitItem->current_stock }}">
-
-                    <!-- Buttons -->
-                    <div class="flex justify-between">
-                        <a href="{{ route('items.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-900 rounded-lg transition-colors">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                            </svg>
-                            Cancel
-                        </a>
-                        <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition-colors">
-                            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            Create Conversion
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Converted Units Table -->
-            <div class="bg-white rounded-xl shadow-xl p-6 border border-blue-200">
-                <h3 class="text-xl font-bold text-blue-600 mb-4">Converted Units</h3>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left text-gray-700">
-                        <thead class="bg-gray-100">
-                        <tr>
-                            <th class="p-3">#</th>
-                            <th class="p-3">Name</th>
-                            <th class="p-3">Unit</th>
-                            <th class="p-3">Quantity</th>
-                            <th class="p-3">Wholesale Rate</th>
-                            <th class="p-3">Retail Rate</th>
-                            <th class="p-3">Type</th>
-                            <th class="p-3">Action</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        @foreach($changedUnits as $index => $changedunit)
-                            <tr class="border-b border-gray-200 hover:bg-gray-50 transition-colors">
-                                <td class="p-3">{{ $changedUnits->firstItem() + $index }}</td>
-                                <td class="p-3">{{ $changedunit->name }}</td>
-                                <td class="p-3">{{ $changedunit->unit_name }}</td>
-                                <td class="p-3">{{ $changedunit->quantity }}</td>
-                                <td class="p-3">{{ $changedunit->wholesale_price }}</td>
-                                <td class="p-3">{{ $changedunit->retail_price }}</td>
-                                <td class="p-3">{{ $changedunit->type }}</td>
-                                <td class="p-3">
-                                    <a href="{{ route('unit.item.delete', $changedunit->id) }}"
-                                       class="inline-flex items-center px-3 py-1 bg-red-600 hover:bg-red-500 text-white rounded-lg transition-colors delete-btn"
-                                       data-id="{{ $changedunit->id }}">
-                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                        </svg>
-                                        Delete
-                                    </a>
-                                </td>
-                            </tr>
-                        @endforeach
-                        </tbody>
-                    </table>
                 </div>
 
-                <!-- Pagination -->
-                <div class="mt-6 flex justify-between items-center">
-                    <div class="text-sm text-gray-600">
-                        Showing {{ $changedUnits->firstItem() }} to {{ $changedUnits->lastItem() }} of {{ $changedUnits->total() }} entries
+                <!-- Conversion Form -->
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label for="unit_name" class="form-label small fw-medium">Convert To</label>
+                        <select name="unit_name" id="unit_name" class="form-select form-select-sm" required>
+                            <option value="">-- Select Unit --</option>
+                            @foreach ($alternateUnits as $alternateUnit)
+                                @if($alternateUnit->id != $unitItem->unit?->id)
+                                    <option value="{{ $alternateUnit->name }}">{{ $alternateUnit->name }}</option>
+                                @endif
+                            @endforeach
+                        </select>
+                        @error('unit_name')
+                        <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
                     </div>
-                    <div class="flex space-x-2">
-                        {{ $changedUnits->links() }}
+
+                    <div class="col-md-6">
+                        <label for="quantity" class="form-label small fw-medium">Quantity</label>
+                        <input type="number" name="quantity" id="quantity" class="form-control form-control-sm" min="1" step="1" required>
+                        @error('quantity')
+                        <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
                     </div>
+
+                    <div class="col-md-6">
+                        <label for="wholesale_rate" class="form-label small fw-medium">Wholesale Rate</label>
+                        <input type="number" name="wholesale_price" id="wholesale_rate" class="form-control form-control-sm bg-light" readonly required>
+                        @error('wholesale_price')
+                        <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-6">
+                        <label for="retail_rate" class="form-label small fw-medium">Retail Rate</label>
+                        <input type="number" name="retail_price" id="retail_rate" class="form-control form-control-sm bg-light" readonly required>
+                        @error('retail_price')
+                        <div class="text-danger small mt-1">{{ $message }}</div>
+                        @enderror
+                    </div>
+                </div>
+
+                <input type="hidden" name="name" value="{{ $unitItem->name }}">
+                <input type="hidden" name="tax_percentage" value="{{ $unitItem->tax->tax_percentage ?? 0 }}">
+                <input type="hidden" name="current_stock" value="{{ $unitItem->current_stock }}">
+
+                <!-- Buttons -->
+                <div class="d-flex justify-content-between mt-3">
+                    <a href="{{ route('items.index') }}" class="btn btn-secondary btn-sm px-3 py-1 d-flex align-items-center">
+                        <svg class="me-1" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                        Cancel
+                    </a>
+                    <button type="submit" id="submitButton" class="btn btn-primary btn-sm px-3 py-1 d-flex align-items-center">
+                        <svg class="me-1" width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                        Create Conversion
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Converted Units Table -->
+        <div class="card shadow-sm p-3 p-md-4">
+            <h3 class="card-title mb-3 fs-5 fw-bold">Converted Units</h3>
+            <div class="table-responsive">
+                <table class="table table-hover table-bordered">
+                    <thead class="table-light">
+                    <tr>
+                        <th scope="col" class="p-2">#</th>
+                        <th scope="col" class="p-2">Name</th>
+                        <th scope="col" class="p-2">Unit</th>
+                        <th scope="col" class="p-2">Quantity</th>
+                        <th scope="col" class="p-2">Wholesale Rate</th>
+                        <th scope="col" class="p-2">Retail Rate</th>
+                        <th scope="col" class="p-2">Type</th>
+                        <th scope="col" class="p-2">Action</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach($changedUnits as $index => $changedunit)
+                        <tr>
+                            <td class="p-2">{{ $changedUnits->firstItem() + $index }}</td>
+                            <td class="p-2">{{ $changedunit->name }}</td>
+                            <td class="p-2">{{ $changedunit->unit_name }}</td>
+                            <td class="p-2">{{ $changedunit->quantity }}</td>
+                            <td class="p-2">{{ $changedunit->wholesale_price }}</td>
+                            <td class="p-2">{{ $changedunit->retail_price }}</td>
+                            <td class="p-2">{{ $changedunit->type }}</td>
+                            <td class="p-2">
+                                <a href="{{ route('unit.item.delete', $changedunit->id) }}"
+                                   class="btn btn-danger btn-sm px-2 py-1 delete-btn"
+                                   data-id="{{ $changedunit->id }}">
+                                    <svg class="me-1" width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                    Delete
+                                </a>
+                            </td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="text-muted small">
+                    Showing {{ $changedUnits->firstItem() }} to {{ $changedUnits->lastItem() }} of {{ $changedUnits->total() }} entries
+                </div>
+                <div>
+                    {{ $changedUnits->links('pagination::bootstrap-5') }}
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- JavaScript for Confirmation on Delete -->
+    <!-- JavaScript for Rate Calculation and Form Handling -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Rate Calculation
+            const quantityInput = document.getElementById('quantity');
+            const wholesaleRateInput = document.getElementById('wholesale_rate');
+            const retailRateInput = document.getElementById('retail_rate');
+            const itemWholesalePrice = {{ $unitItem->wholesale_price ?? 0 }};
+            const itemRetailPrice = {{ $unitItem->retail_price ?? 0 }};
+
+            function updateRates() {
+                const quantity = parseFloat(quantityInput.value) || 0;
+                wholesaleRateInput.value = (itemWholesalePrice * quantity).toFixed(2);
+                retailRateInput.value = (itemRetailPrice * quantity).toFixed(2);
+            }
+
+            quantityInput.addEventListener('input', updateRates);
+            document.getElementById('unit_name').addEventListener('change', function () {
+                // Reset quantity and rates when unit changes
+                quantityInput.value = '';
+                wholesaleRateInput.value = '';
+                retailRateInput.value = '';
+            });
+
+            // Delete Confirmation
             const deleteButtons = document.querySelectorAll('.delete-btn');
             deleteButtons.forEach(button => {
                 button.addEventListener('click', function (e) {
                     e.preventDefault();
-                    const unitId = this.dataset.id;
                     if (confirm('Are you sure you want to delete this unit conversion?')) {
                         window.location.href = this.href;
                     }
                 });
             });
 
-            // Form submission animation
+            // Form Submission Animation
             const form = document.getElementById('conversionForm');
+            const submitButton = document.getElementById('submitButton');
             form.addEventListener('submit', function () {
-                const submitButton = form.querySelector('button[type="submit"]');
                 submitButton.disabled = true;
                 submitButton.innerHTML = `
-                    <svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
-                    </svg>
+                    <span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>
                     Processing...
                 `;
             });
-
-            // Style Laravel pagination links
-            const paginationLinks = document.querySelectorAll('.pagination a');
-            paginationLinks.forEach(link => {
-                link.classList.add('px-3', 'py-1', 'rounded-lg', 'text-sm', 'transition-colors');
-                if (link.classList.contains('active')) {
-                    link.classList.add('bg-blue-600', 'text-white');
-                } else {
-                    link.classList.add('bg-gray-200', 'text-gray-700', 'hover:bg-blue-500', 'hover:text-white');
-                }
-            });
         });
     </script>
-
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Custom Styles for Pagination -->
-    <style>
-        .pagination .page-item.active .page-link {
-            background-color: #2563eb;
-            color: white;
-            border-color: #2563eb;
-        }
-        .pagination .page-item .page-link {
-            background-color: #e5e7eb;
-            color: #374151;
-            border-color: #d1d5db;
-            margin: 0 2px;
-            padding: 8px 12px;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-        .pagination .page-item .page-link:hover {
-            background-color: #3b82f6;
-            color: white;
-            border-color: #3b82f6;
-        }
-        .pagination .page-item.disabled .page-link {
-            background-color: #f3f4f6;
-            color: #9ca3af;
-            border-color: #d1d5db;
-        }
-    </style>
 @endsection

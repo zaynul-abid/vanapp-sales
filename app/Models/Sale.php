@@ -11,6 +11,7 @@ class Sale extends Model
     use HasFactory , softDeletes;
     protected $fillable = [
         'bill_no',
+        'sale_master_id',
         'sale_date',
         'sale_time',
         'customer_id',
@@ -30,6 +31,6 @@ class Sale extends Model
     ];
     public function saleMaster()
     {
-        return $this->belongsTo(SaleMaster::class, 'sales_master_id');
+        return $this->belongsTo(SaleMaster::class, 'sale_master_id', 'id');
     }
 }

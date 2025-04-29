@@ -52,6 +52,7 @@ class EmployeeController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'usertype' => 'employee',
+            'employee_id'=>$employee->id,
         ]);
 
         return redirect()->route('employees.index')->with('success', 'Employee created successfully.');

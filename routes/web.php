@@ -10,9 +10,11 @@ use App\Http\Controllers\Department\DepartmentController;
 use App\Http\Controllers\Employee\EmployeeController;
 use App\Http\Controllers\Items\CategoryController;
 use App\Http\Controllers\Items\UnitController;
+use App\Http\Controllers\Items\AlternativeUnitController;
 use App\Http\Controllers\Items\ItemController;
 use App\Http\Controllers\Items\TaxController;
 use App\Http\Controllers\Sales\CustomerController;
+use App\Http\Controllers\Report\ReportController;
 
 
 
@@ -37,6 +39,7 @@ Route::middleware(['auth', 'usertype:admin'])->group(function () {
     Route::resource('categories', CategoryController::class);
 
     Route::resource('units', UnitController::class);
+    Route::resource('alternative-units', AlternativeUnitController::class);
 
     Route::resource('taxes',TaxController ::class);
 
@@ -71,6 +74,8 @@ Route::middleware(['auth', 'usertype:employee'])->group(function () {
     Route::get('/search-customers', [CustomerController::class,'searchCustomers'])->name('search.customers');
 
     Route::get('/search-items', [ItemController::class,'searchItems'])->name('search.items');
+
+    Route::get('/reports-index',[ReportController::class,'index'])->name('reports.index');
 
 });
 

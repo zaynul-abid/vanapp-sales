@@ -33,7 +33,19 @@ class SaleMaster extends Model
     ];
     public function sales()
     {
-        return $this->hasMany(Sale::class, 'sales_master_id');
+        return $this->hasMany(Sale::class, 'sale_master_id', 'id');
     }
-
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+    public function van()
+    {
+        return $this->belongsTo(Van::class);
+    }
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
+

@@ -20,41 +20,61 @@ class SalesController extends Controller
     public function store(Request $request)
     {
 
+//        dd($request->all());
         DB::beginTransaction();
 
         try {
-            // 1. Generate the Bill No
-            $billNo = $this->generateBillNo();
-            $vanId = auth()->user()->van ? auth()->user()->van->id : null;
+            // Validate the request
+            $validated = $request->validate([
+                'sale_date' => 'required|date',
+                'sale_time' => 'required',
+                'customer_id' => 'required|integer',
+                'customer_name' => 'required|string',
+                'items' => 'required|array|min:1',
+                'items.*.item_id' => 'required|integer',
+                'items.*.item_name' => 'required|string',
+                'items.*.rate' => 'required|numeric|min:0',
+                'items.*.quantity' => 'required|numeric|min:0.01',
+                'gross_amount' => 'required|numeric|min:0',
+                'total_amount' => 'required|numeric|min:0',
+                'net_total_amount' => 'required|numeric|min:0',
+            ]);
 
-            // 2. Create SaleMaster
+            // Generate the Bill No
+            $billNo = $this->generateBillNo();
+            $vanId = auth()->user()->employee?->van?->id;
+            $currentYear = date('Y');
+            $financialYear = ($currentYear) . '-' . ($currentYear + 1);
+//dd($billNo, $vanId, $financialYear);
+            // Create SaleMaster
             $saleMaster = SaleMaster::create([
                 'bill_no' => $billNo,
                 'sale_date' => $request->input('sale_date'),
                 'sale_time' => $request->input('sale_time'),
                 'customer_id' => $request->input('customer_id'),
                 'customer_name' => $request->input('customer_name'),
+                'customer_address' => $request->input('customer_address'),
                 'sale_type' => $request->input('sale_type'),
                 'gross_amount' => $request->input('gross_amount'),
                 'tax_amount' => $request->input('tax_amount'),
                 'total_amount' => $request->input('total_amount'),
-                'discount' => $request->input('discount'),
+                'discount' => $request->input('discount') ?? 0,
                 'net_gross_amount' => $request->input('net_gross_amount'),
                 'net_tax_amount' => $request->input('net_tax_amount'),
                 'net_total_amount' => $request->input('net_total_amount'),
                 'narration' => $request->input('narration'),
-                'cash_amount' => $request->input('cash_amount'),
-                'credit_amount' => $request->input('credit_amount'),
-                'upi_amount' => $request->input('upi_amount'),
-                'financial_year' => $request->input('financial_year'),
+                'cash_amount' => $request->input('cash_amount') ?? 0,
+                'credit_amount' => $request->input('credit_amount') ?? 0,
+                'upi_amount' => $request->input('upi_amount') ?? 0,
+                'financial_year' => $financialYear,
                 'van_id' => $vanId,
-                'user_id' => $request->input('user_id'),
+                'user_id' => auth()->id(),
             ]);
-
-            // 3. Create Sale Items
+//dd($billNo);
+            // Create Sale Items
             foreach ($request->input('items') as $item) {
                 Sale::create([
-                    'sales_master_id' => $saleMaster->id,
+                    'sale_master_id' => $saleMaster->id,
                     'bill_no' => $billNo,
                     'sale_date' => $request->input('sale_date'),
                     'sale_time' => $request->input('sale_time'),
@@ -62,48 +82,50 @@ class SalesController extends Controller
                     'item_id' => $item['item_id'],
                     'item_name' => $item['item_name'],
                     'rate' => $item['rate'],
-                    'unit_price' => $item['unit_price'],
+                    'unit_price' => $item['unit_price'] ?? $item['rate'],
                     'quantity' => $item['quantity'],
                     'unit' => $item['unit'],
                     'gross_amount' => $item['gross_amount'],
                     'tax_amount' => $item['tax_amount'],
                     'total_amount' => $item['total_amount'],
+                    'tax_percentage' => $item['tax_percentage'] ?? 0,
+                    'price_type' => $item['price_type'] ?? 'Retail',
                     'narration' => $request->input('narration'),
-                    'financial_year' => $request->input('financial_year'),
+                    'financial_year' => $financialYear,
                     'van_id' => $vanId,
-                    'user_id' => $request->input('user_id'),
+                    'user_id' => auth()->id(),
                 ]);
             }
 
             DB::commit();
-            return response()->json(['message' => 'Sale stored successfully!']);
+
+            return redirect()->route('sales.index')->with('success', 'sale created successfully.');
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], 500);
+            return redirect()->back()->with('error', 'An error occurred while storing the sale details.');
         }
     }
 
     /**
      * Generate the next bill number
-     *
-     * @return string
      */
     private function generateBillNo()
     {
-        // Get the last SaleMaster including soft-deleted ones
         $lastSaleMaster = SaleMaster::withTrashed()
             ->orderBy('id', 'desc')
             ->first();
 
         if ($lastSaleMaster) {
-            // Remove BILL- prefix and convert to integer
+            // Get the numeric part
             $lastNumber = intval(str_replace('BILL-', '', $lastSaleMaster->bill_no));
             $nextNumber = $lastNumber + 1;
         } else {
-            $nextNumber = 1; // first bill
+            $nextNumber = 1;
         }
 
-        // Format: BILL-0001
+        // Format with leading zeros
         return 'BILL-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
     }
+
 }

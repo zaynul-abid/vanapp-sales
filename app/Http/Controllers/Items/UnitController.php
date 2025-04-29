@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Items;
 
 use App\Http\Controllers\Controller;
+use App\Models\AlternateUnit;
 use App\Models\Item;
 use App\Models\ItemUnitDetail;
 use App\Models\Unit;
@@ -62,29 +63,41 @@ class UnitController extends Controller
         $unit->delete();
         return redirect()->route('units.index')->with('success', 'Unit deleted successfully.');
     }
-    public function showUnit($id){
-        $changedUnits = ItemUnitDetail::paginate(10);
-        $units=Unit::all();
+    public function showUnit($id)
+    {
+        $changedUnits = ItemUnitDetail::where('default_item_id', $id)->paginate(10);
+        $alternateUnits = AlternateUnit::all(); // Fetch from alternate_units
         $unitItem = Item::findOrFail($id);
-       return view('dashboard.pages.components.items.change-unit', compact('unitItem','units','changedUnits'));
-
+        return view('dashboard.pages.components.items.change-unit', compact('unitItem', 'alternateUnits', 'changedUnits'));
     }
 
-    public function createUnit(Request $request, $id){
+    public function createUnit(Request $request, $id)
+    {
+        $request->validate([
+            'unit_name' => 'required|string|max:255|exists:alternate_units,name', // Validate against alternate_units
+            'quantity' => 'required|numeric|min:1',
+            'wholesale_price' => 'required|numeric|min:1',
+            'retail_price' => 'required|numeric|min:1',
+            'name' => 'required|string|max:255',
+            'tax_percentage' => 'required|numeric|min:0',
+            'current_stock' => 'required|numeric|min:0',
+            'base_unit_id' => 'nullable|exists:units,id',
+        ]);
 
-      $data=[
-          'default_item_id'=>$id,
-          'name'=>$request->name,
-          'unit_name'=>$request->unit_name,
-          'quantity'=> $request->quantity,
-          'tax_percentage'=>$request->tax_percentage,
-          'wholesale_price'=>$request->wholesale_price,
-          'retail_price'=>$request->retail_price,
-          'stock'=>$request->current_stock,
-          'type'=>'secondary',
-      ] ;
-      ItemUnitDetail::create($data);
-      return redirect()->route('items.index')->with('success', 'Unit added successfully.');
+        $data = [
+            'default_item_id' => $id,
+            'name' => $request->name,
+            'unit_name' => $request->unit_name,
+            'quantity' => $request->quantity,
+            'tax_percentage' => $request->tax_percentage,
+            'wholesale_price' => $request->wholesale_price,
+            'retail_price' => $request->retail_price,
+            'stock' => $request->current_stock,
+            'type' => 'secondary',
+        ];
+
+        ItemUnitDetail::create($data);
+        return redirect()->route('items.index')->with('success', 'Unit added successfully.');
     }
 
     public function deleteUnit($id)
@@ -100,6 +113,5 @@ class UnitController extends Controller
             return redirect()->back()->with('error', 'An error occurred while deleting the unit conversion.');
         }
     }
-
 
 }

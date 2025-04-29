@@ -27,7 +27,7 @@ class Employee extends Model
 
     public function van()
     {
-        return $this->hasOne(Van::class);
+        return $this->hasOne(Van::class, 'employee_id');
     }
 
 

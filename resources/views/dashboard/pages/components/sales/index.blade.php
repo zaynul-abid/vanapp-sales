@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,8 +9,8 @@
     <link rel="stylesheet" href="https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
     <style>
         #customer_suggestions {
-            width: auto; /* Adjusts to content width */
-            min-width: 100%; /* But at least as wide as input */
+            width: auto;
+            min-width: 100%;
         }
 
         #customer_suggestions div {
@@ -29,24 +30,42 @@
             font-size: 0.9em;
         }
     </style>
-
 </head>
 
 <body class="bg-gray-100 p-6">
 <div class="max-w-7xl mx-auto bg-white p-8 rounded-lg shadow-md">
     <h1 class="text-3xl font-bold text-gray-800 mb-8">Sale Entry</h1>
 
+    @if(session('success'))
+        <div class="flex items-center justify-between p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg" role="alert">
+            <div>
+                <strong class="font-bold">Success! </strong> {{ session('success') }}
+            </div>
+            <button type="button" class="text-green-700 hover:text-green-900" onclick="this.parentElement.remove()" aria-label="Close">
+                ✖
+            </button>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="flex items-center justify-between p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
+            <div>
+                <strong class="font-bold">Error! </strong> {{ session('error') }}
+            </div>
+            <button type="button" class="text-red-700 hover:text-red-900" onclick="this.parentElement.remove()" aria-label="Close">
+                ✖
+            </button>
+        </div>
+    @endif
+
     <form action="{{route('sales.store')}}" method="POST" onsubmit="return validateForm()">
         @csrf
-        <input type="hidden" name="user_id" value="{{ auth()->user()->id }}">
-
 
         <!-- Sale Master Section -->
-        <h2 class="text-2xl font-semibold text-gray-700 mb-6">Sale Master</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div>
                 <label for="sale_date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                <input type="date" id="sale_date"  value="{{ now()->format('Y-m-d') }}" name="sale_date" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <input type="date" id="sale_date" value="{{ now()->format('Y-m-d') }}" name="sale_date" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
             </div>
             <div>
                 <label for="sale_time" class="block text-sm font-medium text-gray-700 mb-1">Time</label>
@@ -73,30 +92,37 @@
         <hr class="my-8">
 
         <!-- Sale Details Section -->
-        <h2 class="text-2xl font-semibold text-gray-700 mb-7">Sale Details</h2>
+        <h2 class="text-2xl font-semibold text-gray-700 mb-7">Item Details</h2>
         <div class="mb-6">
             <h3 class="text-lg font-medium text-gray-700 mb-4">Add Item</h3>
-            <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-8 gap-4 mb-4">
                 <div>
                     <label for="item_name_input" class="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
-                    <input type="text" id="item_name_input" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" >
+                    <input type="text" id="item_name_input" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
                     <label for="item_id_input" class="block text-sm font-medium text-gray-700 mb-1">Item ID</label>
-                    <input type="text" id="item_id_input" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" >
+                    <input type="text" id="item_id_input" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
-
                 <div>
                     <label for="rate_input" class="block text-sm font-medium text-gray-700 mb-1">Rate</label>
-                    <input type="number" id="rate_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" >
+                    <input type="number" id="rate_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div>
-                    <label for="quantity_input" class="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
-                    <input type="number" id="quantity_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" >
+                    <label for="unit_input" class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
+                    <input type="text" id="unit_input" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
                 </div>
                 <div>
-                    <label for="unit_input" class="block text-sm font-medium text-gray-700 mb-1">unit</label>
-                    <input type="text" id="unit_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" >
+                    <label for="unit_quantity_input" class="block text-sm font-medium text-gray-700 mb-1">Unit Quantity</label>
+                    <input type="number" id="unit_quantity_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
+                </div>
+                <div>
+                    <label for="custom_quantity_input" class="block text-sm font-medium text-gray-700 mb-1">Custom Quantity</label>
+                    <input type="number" id="custom_quantity_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="updateTotalQuantity()">
+                </div>
+                <div>
+                    <label for="total_quantity_input" class="block text-sm font-medium text-gray-700 mb-1">Total Quantity</label>
+                    <input type="number" id="total_quantity_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
                 </div>
                 <div>
                     <label for="tax_percentage_input" class="block text-sm font-medium text-gray-700 mb-1">Tax %</label>
@@ -111,13 +137,13 @@
             <table id="item-table" class="min-w-full bg-white border border-gray-300">
                 <thead>
                 <tr class="bg-gray-100">
-
-
                     <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Item ID</th>
                     <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Item Name</th>
                     <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Rate</th>
-                    <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Quantity</th>
-                    <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Unit </th>
+                    <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Unit</th>
+                    <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Unit Quantity</th>
+                    <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Custom Quantity</th>
+                    <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Total Quantity</th>
                     <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Tax %</th>
                     <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Total Amount</th>
                     <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Actions</th>
@@ -210,7 +236,7 @@
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
 <script>
-    // ITEM SEARCH FUNCTIONALITY - START
+    // ITEM SEARCH FUNCTIONALITY
     $(document).ready(function() {
         // Create suggestions container for items
         $('body').append('<div id="item_suggestions" class="hidden absolute z-10 mt-1 bg-white shadow-lg rounded-md border border-gray-300 max-h-60 overflow-auto" style="width: 300px;"></div>');
@@ -229,6 +255,10 @@
 
         $('#item_name_input').on('input', function() {
             let query = $(this).val().trim();
+            let suggestions = $('#item_suggestions');
+            suggestions.empty();
+            itemCurrentFocus = -1;
+
             if (query.length >= 2) {
                 $.ajax({
                     url: '/search-items',
@@ -236,11 +266,11 @@
                     data: { query: query },
                     dataType: 'json',
                     success: function(response) {
-                        let suggestions = $('#item_suggestions');
+                        console.log('Search response:', response); // Debug: Log the response
                         suggestions.empty();
                         itemCurrentFocus = -1;
 
-                        if (response.length > 0) {
+                        if (Array.isArray(response) && response.length > 0) {
                             response.forEach(function(item) {
                                 suggestions.append(
                                     `<div class="item-suggestion p-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100"
@@ -249,12 +279,14 @@
                                         data-retail="${item.retail_price}"
                                         data-wholesale="${item.wholesale_price}"
                                         data-unit="${item.unit_name}"
+                                        data-unit-quantity="${item.quantity || 1}"
                                         data-tax="${item.tax_percentage}">
                                         <div class="font-medium">${item.name}</div>
                                         <div class="text-sm text-gray-600">
                                             ${item.unit_name} |
                                             Retail: ₹${item.retail_price} |
                                             Wholesale: ₹${item.wholesale_price} |
+                                            Unit Qty: ${item.unit_quantity || 1} |
                                             Tax: ${item.tax_percentage}%
                                         </div>
                                     </div>`
@@ -262,15 +294,22 @@
                             });
                             suggestions.removeClass('hidden');
                         } else {
-                            suggestions.addClass('hidden');
+                            suggestions.append(
+                                `<div class="p-2 text-gray-600">No matching items found</div>`
+                            );
+                            suggestions.removeClass('hidden');
                         }
                     },
                     error: function(xhr, status, error) {
                         console.error('Error fetching item data:', error);
+                        suggestions.append(
+                            `<div class="p-2 text-red-600">Error fetching items</div>`
+                        );
+                        suggestions.removeClass('hidden');
                     }
                 });
             } else {
-                $('#item_suggestions').addClass('hidden');
+                suggestions.addClass('hidden');
             }
         });
 
@@ -311,15 +350,18 @@
         function selectItem(item) {
             $('#item_name_input').val(item.data('name'));
             $('#item_id_input').val(item.data('id'));
-            $('#rate_input').val(item.data('retail')); // Default to retail price
-            $('#unit_input').val(item.data('unit'));
+            $('#rate_input').val(item.data('retail'));
+            $('#unit_input').val(item.data('unit') || 'Cartoon'); // Set unit name from database
+            $('#unit_quantity_input').val(item.data('unit-quantity')); // Set unit quantity from database
             $('#tax_percentage_input').val(item.data('tax'));
-            // Store both prices in data attributes
             $('#rate_input').data('retail', item.data('retail'));
             $('#rate_input').data('wholesale', item.data('wholesale'));
+            $('#custom_quantity_input').val('');
+            $('#total_quantity_input').val('');
             $('#item_suggestions').addClass('hidden');
             itemCurrentFocus = -1;
-            $('#quantity_input').focus();
+            $('#custom_quantity_input').focus();
+            updateTotalQuantity();
         }
 
         // Handle mouse selection for items
@@ -334,9 +376,16 @@
             }
         });
     });
-    // ITEM SEARCH FUNCTIONALITY - END
 
-    // CUSTOMER SEARCH FUNCTIONALITY - START
+    // Update total quantity display
+    function updateTotalQuantity() {
+        const unitQuantity = parseFloat(document.getElementById('unit_quantity_input').value) || 0;
+        const customQuantity = parseFloat(document.getElementById('custom_quantity_input').value) || 0;
+        const totalQuantity = unitQuantity * customQuantity;
+        document.getElementById('total_quantity_input').value = totalQuantity.toFixed(2);
+    }
+
+    // CUSTOMER SEARCH FUNCTIONALITY
     $(document).ready(function() {
         let currentFocus = -1;
 
@@ -418,8 +467,6 @@
         }
 
         function selectCustomer(item) {
-            console.log('Selected customer ID:', item.data('id'));
-            console.log('Selected customer ID:', item.data('name'));
             $('#customer_name').val(item.data('name'));
             $('#customer_id').val(item.data('id'));
             $('#customer_address').val(item.data('address'));
@@ -439,36 +486,40 @@
             }
         });
     });
-    // CUSTOMER SEARCH FUNCTIONALITY - END
 
+    // ITEM TABLE MANAGEMENT
     function addItemToTable() {
         const itemId = document.getElementById('item_id_input').value;
         const itemName = document.getElementById('item_name_input').value;
         let rate = parseFloat(document.getElementById('rate_input').value) || 0;
-        const quantity = parseFloat(document.getElementById('quantity_input').value) || 0;
-        const unit = document.getElementById('unit_input').value || '';
+        const unit = document.getElementById('unit_input').value;
+        const unitQuantity = parseFloat(document.getElementById('unit_quantity_input').value) || 0;
+        const customQuantity = parseFloat(document.getElementById('custom_quantity_input').value) || 0;
+        const totalQuantity = parseFloat(document.getElementById('total_quantity_input').value) || 0;
         const taxPercentage = parseFloat(document.getElementById('tax_percentage_input').value) || 0;
         const retailPrice = parseFloat($('#rate_input').data('retail')) || 0;
         const wholesalePrice = parseFloat($('#rate_input').data('wholesale')) || 0;
 
-        if (!itemId || !itemName || rate <= 0 || quantity <= 0 || !unit) {
+        if (!itemId || !itemName || rate <= 0 || unitQuantity <= 0 || customQuantity <= 0 || totalQuantity <= 0 || !unit) {
             alert('Please fill in all required item fields with valid values.');
             return;
         }
 
         const priceType = rate === retailPrice ? 'Retail' : 'Wholesale';
-
-        const grossAmount = rate * quantity;
+        const grossAmount = rate * totalQuantity;
         const taxAmount = grossAmount * (taxPercentage / 100);
         const totalAmount = grossAmount + taxAmount;
+
+        // Get the current row count to use as index
+        const rowCount = $('#item-rows tr').length;
 
         const row = `
             <tr class="item-row">
                 <td class="py-2 px-4 border-b">
-                    <input type="hidden" name="items[][item_id]" value="${itemId}">${itemId}
+                    <input type="hidden" name="items[${rowCount}][item_id]" value="${itemId}">${itemId}
                 </td>
                 <td class="py-2 px-4 border-b">
-                    <input type="hidden" name="items[][item_name]" value="${itemName}">${itemName}
+                    <input type="hidden" name="items[${rowCount}][item_name]" value="${itemName}">${itemName}
                 </td>
                 <td class="py-2 px-4 border-b relative">
                     <div class="rate-display">${rate.toFixed(2)}</div>
@@ -476,20 +527,29 @@
                         <div class="p-2 hover:bg-blue-50 cursor-pointer" data-price="${retailPrice}">Retail: ${retailPrice.toFixed(2)}</div>
                         <div class="p-2 hover:bg-blue-50 cursor-pointer" data-price="${wholesalePrice}">Wholesale: ${wholesalePrice.toFixed(2)}</div>
                     </div>
-                    <input type="hidden" name="items[][rate]" value="${rate.toFixed(2)}">
-                    <input type="hidden" name="items[][price_type]" value="${priceType}">
+                    <input type="hidden" name="items[${rowCount}][rate]" value="${rate.toFixed(2)}">
+                    <input type="hidden" name="items[${rowCount}][price_type]" value="${priceType}">
+                    <input type="hidden" name="items[${rowCount}][unit_price]" value="${rate.toFixed(2)}">
                 </td>
                 <td class="py-2 px-4 border-b">
-                    <input type="hidden" name="items[][quantity]" value="${quantity.toFixed(2)}">${quantity.toFixed(2)}
+                    <input type="hidden" name="items[${rowCount}][unit]" value="${unit}">${unit}
                 </td>
                 <td class="py-2 px-4 border-b">
-                    <input type="hidden" name="items[][unit]" value="${unit}">${unit}
+                    <input type="hidden" name="items[${rowCount}][unit_quantity]" value="${unitQuantity.toFixed(2)}">${unitQuantity.toFixed(2)}
                 </td>
                 <td class="py-2 px-4 border-b">
-                    <input type="hidden" name="items[][tax_percentage]" value="${taxPercentage.toFixed(2)}">${taxPercentage.toFixed(2)}
+                    <input type="hidden" name="items[${rowCount}][custom_quantity]" value="${customQuantity.toFixed(2)}">${customQuantity.toFixed(2)}
                 </td>
                 <td class="py-2 px-4 border-b">
-                    <input type="hidden" name="items[][total_amount]" value="${totalAmount.toFixed(2)}">${totalAmount.toFixed(2)}
+                    <input type="hidden" name="items[${rowCount}][total_quantity]" value="${totalQuantity.toFixed(2)}">${totalQuantity.toFixed(2)}
+                </td>
+                <td class="py-2 px-4 border-b">
+                    <input type="hidden" name="items[${rowCount}][tax_percentage]" value="${taxPercentage.toFixed(2)}">${taxPercentage.toFixed(2)}
+                </td>
+                <td class="py-2 px-4 border-b">
+                    <input type="hidden" name="items[${rowCount}][total_amount]" value="${totalAmount.toFixed(2)}">${totalAmount.toFixed(2)}
+                    <input type="hidden" name="items[${rowCount}][gross_amount]" value="${grossAmount.toFixed(2)}">
+                    <input type="hidden" name="items[${rowCount}][tax_amount]" value="${taxAmount.toFixed(2)}">
                 </td>
                 <td class="py-2 px-4 border-b">
                     <button type="button" onclick="removeItemRow(this)" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Remove</button>
@@ -513,8 +573,9 @@
             const newPrice = parseFloat($(this).data('price'));
             const row = $(this).closest('tr');
             row.find('.rate-display').text(newPrice.toFixed(2));
-            row.find('input[name="items[][rate]"]').val(newPrice.toFixed(2));
-            row.find('input[name="items[][price_type]"]').val($(this).text().includes('Retail') ? 'Retail' : 'Wholesale');
+            row.find('input[name^="items["][name$="[rate]"]').val(newPrice.toFixed(2));
+            row.find('input[name^="items["][name$="[unit_price]"]').val(newPrice.toFixed(2));
+            row.find('input[name^="items["][name$="[price_type]"]').val($(this).text().includes('Retail') ? 'Retail' : 'Wholesale');
             priceSelector.addClass('hidden');
             updateTotals();
         });
@@ -523,10 +584,17 @@
         document.getElementById('item_id_input').value = '';
         document.getElementById('item_name_input').value = '';
         document.getElementById('rate_input').value = '';
-        document.getElementById('quantity_input').value = '';
+        document.getElementById('unit_quantity_input').value = '';
+        document.getElementById('custom_quantity_input').value = '';
+        document.getElementById('total_quantity_input').value = '';
         document.getElementById('unit_input').value = '';
         document.getElementById('tax_percentage_input').value = '0.00';
 
+        updateTotals();
+    }
+
+    function removeItemRow(button) {
+        button.closest('.item-row').remove();
         updateTotals();
     }
 
@@ -535,11 +603,7 @@
         $('.price-type-selector').addClass('hidden');
     });
 
-    function removeItemRow(button) {
-        button.closest('.item-row').remove();
-        updateTotals();
-    }
-
+    // CALCULATION FUNCTIONS
     function updateTotals() {
         const rows = document.querySelectorAll('.item-row');
         let grossAmount = 0;
@@ -547,11 +611,11 @@
 
         // Calculate Gross Amount and Tax Amount before discount
         rows.forEach(row => {
-            const rate = parseFloat(row.querySelector('input[name="items[][rate]"]').value) || 0;
-            const quantity = parseFloat(row.querySelector('input[name="items[][quantity]"]').value) || 0;
-            const taxPercentage = parseFloat(row.querySelector('input[name="items[][tax_percentage]"]').value) || 0;
+            const rate = parseFloat(row.querySelector('input[name^="items["][name$="[rate]"]').value) || 0;
+            const totalQuantity = parseFloat(row.querySelector('input[name^="items["][name$="[total_quantity]"]').value) || 0;
+            const taxPercentage = parseFloat(row.querySelector('input[name^="items["][name$="[tax_percentage]"]').value) || 0;
 
-            const itemGross = rate * quantity;
+            const itemGross = rate * totalQuantity;
             const itemTax = itemGross * (taxPercentage / 100);
             grossAmount += itemGross;
             taxAmount += itemTax;
@@ -563,14 +627,13 @@
 
         // Recalculate tax after discount by distributing discount proportionally
         let netTaxAmount = 0;
-        if (grossAmount > 0) { // Avoid division by zero
+        if (grossAmount > 0) {
             rows.forEach(row => {
-                const rate = parseFloat(row.querySelector('input[name="items[][rate]"]').value) || 0;
-                const quantity = parseFloat(row.querySelector('input[name="items[][quantity]"]').value) || 0;
-                const taxPercentage = parseFloat(row.querySelector('input[name="items[][tax_percentage]"]').value) || 0;
+                const rate = parseFloat(row.querySelector('input[name^="items["][name$="[rate]"]').value) || 0;
+                const totalQuantity = parseFloat(row.querySelector('input[name^="items["][name$="[total_quantity]"]').value) || 0;
+                const taxPercentage = parseFloat(row.querySelector('input[name^="items["][name$="[tax_percentage]"]').value) || 0;
 
-                const itemGross = rate * quantity;
-                // Proportional discount for this item
+                const itemGross = rate * totalQuantity;
                 const itemDiscount = (itemGross / grossAmount) * discount;
                 const itemNetGross = itemGross - itemDiscount;
                 const itemNetTax = itemNetGross * (taxPercentage / 100);
@@ -629,6 +692,7 @@
         document.getElementById('total_payment_amount').value = totalPayment.toFixed(2);
     }
 
+    // FORM VALIDATION
     function validateForm() {
         const netTotalAmount = parseFloat(document.getElementById('net_total_amount').value) || 0;
         const totalPayment = parseFloat(document.getElementById('total_payment_amount').value) || 0;
@@ -643,3 +707,4 @@
 </script>
 </body>
 </html>
+```
