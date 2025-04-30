@@ -21,103 +21,126 @@ class SalesController extends Controller
     }
     public function store(Request $request)
     {
-        // Start a database transaction
-        return DB::transaction(function () use ($request) {
-            // Generate the Bill No
-            $billNo = $this->generateBillNo();
-            $vanId = auth()->user()->employee?->van?->id;
-            $currentYear = date('Y');
-            $financialYear = ($currentYear) . '-' . ($currentYear + 1);
+        try {
+            return DB::transaction(function () use ($request) {
+                // Generate the Bill No
+                $billNo = $this->generateBillNo();
+                $vanId = auth()->user()->employee?->van?->id;
+                $currentYear = date('Y');
+                $financialYear = ($currentYear) . '-' . ($currentYear + 1);
 
-            // Validate stock availability
-            foreach ($request->input('items') as $item) {
-                $itemId = $item['item_id'];
-                $requestedQuantity = $item['total_quantity'];
+                // Validate stock availability by grouping items by default_item_id
+                $itemQuantities = [];
+                $itemNames = [];
 
-                // Check stock in items table
-                $itemRecord = Item::find($itemId);
-                if (!$itemRecord || $itemRecord->current_stock < $requestedQuantity) {
-                    $availableStock = $itemRecord ? $itemRecord->current_stock : 0;
-                    return redirect()->back()->with('error', "Insufficient stock for item {$item['item_name']}. Requested: {$requestedQuantity}, Available: {$availableStock}.");
+                foreach ($request->input('items') as $item) {
+                    $itemUnitDetailId = $item['item_id'];
+                    $requestedQuantity = floatval($item['total_quantity']);
+
+                    // Get the item unit detail
+                    $itemUnitDetail = ItemUnitDetail::find($itemUnitDetailId);
+                    if (!$itemUnitDetail) {
+                        throw new \Exception("Invalid item: {$item['item_name']}.");
+                    }
+
+                    // Group quantities by default_item_id
+                    $defaultItemId = $itemUnitDetail->default_item_id;
+                    if (!isset($itemQuantities[$defaultItemId])) {
+                        $itemQuantities[$defaultItemId] = 0;
+                        $itemNames[$defaultItemId] = $item['item_name'];
+                    }
+                    $itemQuantities[$defaultItemId] += $requestedQuantity;
+
+                    // Validate stock for this default_item_id
+                    $itemRecord = Item::find($defaultItemId);
+                    if (!$itemRecord || $itemRecord->current_stock < $itemQuantities[$defaultItemId]) {
+                        $availableStock = $itemRecord ? $itemRecord->current_stock : 0;
+                        throw new \Exception("Insufficient stock for item {$itemNames[$defaultItemId]}. Requested: {$itemQuantities[$defaultItemId]}, Available: {$availableStock}.");
+                    }
                 }
 
-                // Check stock in item_unit_details table
-                $itemUnitDetail = ItemUnitDetail::where('default_item_id', $itemId)->first();
-                if (!$itemUnitDetail || $itemUnitDetail->stock < $requestedQuantity) {
-                    $availableStock = $itemUnitDetail ? $itemUnitDetail->stock : 0;
-                    return redirect()->back()->with('error', "Insufficient stock for item {$item['item_name']} in unit details. Requested: {$requestedQuantity}, Available: {$availableStock}.");
-                }
-            }
-
-            // Create SaleMaster
-            $saleMaster = SaleMaster::create([
-                'bill_no' => $billNo,
-                'sale_date' => $request->input('sale_date'),
-                'sale_time' => $request->input('sale_time'),
-                'customer_id' => $request->input('customer_id'),
-                'customer_name' => $request->input('customer_name'),
-                'customer_address' => $request->input('customer_address'),
-                'sale_type' => $request->input('sale_type'),
-                'gross_amount' => $request->input('gross_amount'),
-                'tax_amount' => $request->input('tax_amount'),
-                'total_amount' => $request->input('total_amount'),
-                'discount' => $request->input('discount') ?? 0,
-                'net_gross_amount' => $request->input('net_gross_amount'),
-                'net_tax_amount' => $request->input('net_tax_amount'),
-                'net_total_amount' => $request->input('net_total_amount'),
-                'narration' => $request->input('narration'),
-                'cash_amount' => $request->input('cash_amount') ?? 0,
-                'credit_amount' => $request->input('credit_amount') ?? 0,
-                'upi_amount' => $request->input('upi_amount') ?? 0,
-                'card_amount' => $request->input('card_amount') ?? 0,
-                'financial_year' => $financialYear,
-                'van_id' => $vanId,
-                'user_id' => auth()->id(),
-            ]);
-
-            // Create Sale Items and Update Stock
-            foreach ($request->input('items') as $item) {
-                $itemId = $item['item_id'];
-                $requestedQuantity = $item['total_quantity'];
-
-                // Create Sale record
-                Sale::create([
-                    'sale_master_id' => $saleMaster->id,
+                // Create SaleMaster
+                $saleMaster = SaleMaster::create([
                     'bill_no' => $billNo,
                     'sale_date' => $request->input('sale_date'),
                     'sale_time' => $request->input('sale_time'),
                     'customer_id' => $request->input('customer_id'),
-                    'item_id' => $itemId,
-                    'item_name' => $item['item_name'],
-                    'rate' => $item['rate'],
-                    'unit_price' => $item['unit_price'] ?? $item['rate'],
-                    'quantity' => $requestedQuantity,
-                    'unit' => $item['unit'],
-                    'gross_amount' => $item['gross_amount'],
-                    'tax_amount' => $item['tax_amount'],
-                    'total_amount' => $item['total_amount'],
-                    'tax_percentage' => $item['tax_percentage'] ?? 0,
-                    'price_type' => $item['price_type'] ?? 'Retail',
+                    'customer_name' => $request->input('customer_name'),
+                    'customer_address' => $request->input('customer_address'),
+                    'sale_type' => $request->input('sale_type'),
+                    'gross_amount' => $request->input('gross_amount'),
+                    'tax_amount' => $request->input('tax_amount'),
+                    'total_amount' => $request->input('total_amount'),
+                    'discount' => $request->input('discount') ?? 0,
+                    'net_gross_amount' => $request->input('net_gross_amount'),
+                    'net_tax_amount' => $request->input('net_tax_amount'),
+                    'net_total_amount' => $request->input('net_total_amount'),
                     'narration' => $request->input('narration'),
+                    'cash_amount' => $request->input('cash_amount') ?? 0,
+                    'credit_amount' => $request->input('credit_amount') ?? 0,
+                    'upi_amount' => $request->input('upi_amount') ?? 0,
+                    'card_amount' => $request->input('card_amount') ?? 0,
                     'financial_year' => $financialYear,
                     'van_id' => $vanId,
                     'user_id' => auth()->id(),
                 ]);
 
-                // Reduce stock in items table
-                $itemRecord = Item::find($itemId);
-                $itemRecord->current_stock -= $requestedQuantity;
-                $itemRecord->save();
+                // Create Sale Items and Update Stock
+                foreach ($request->input('items') as $item) {
+                    $itemUnitDetailId = $item['item_id'];
+                    $requestedQuantity = floatval($item['total_quantity']);
 
-                // Reduce stock in item_unit_details table
-                $itemUnitDetail = ItemUnitDetail::where('default_item_id', $itemId)->first();
-                $itemUnitDetail->stock -= $requestedQuantity;
-                $itemUnitDetail->save();
-            }
+                    // Get the item unit detail
+                    $itemUnitDetail = ItemUnitDetail::find($itemUnitDetailId);
+                    $defaultItemId = $itemUnitDetail->default_item_id;
 
-            return redirect()->route('sales.index')->with('success', 'Sale created successfully.');
-        });
+                    // Create Sale record
+                    Sale::create([
+                        'sale_master_id' => $saleMaster->id,
+                        'bill_no' => $billNo,
+                        'sale_date' => $request->input('sale_date'),
+                        'sale_time' => $request->input('sale_time'),
+                        'customer_id' => $request->input('customer_id'),
+                        'item_id' => $itemUnitDetailId,
+                        'default_item_id' => $defaultItemId,
+                        'item_name' => $item['item_name'],
+                        'rate' => $item['rate'],
+                        'unit_price' => $item['unit_price'] ?? $item['rate'],
+                        'quantity' => $item['total_quantity'],
+                        'total_quantity' => $requestedQuantity,
+                        'unit' => $item['unit'],
+                        'gross_amount' => $item['gross_amount'],
+                        'tax_amount' => $item['tax_amount'],
+                        'total_amount' => $item['total_amount'],
+                        'tax_percentage' => $item['tax_percentage'] ?? 0,
+                        'price_type' => $item['price_type'] ?? 'Retail',
+                        'narration' => $request->input('narration'),
+                        'financial_year' => $financialYear,
+                        'van_id' => $vanId,
+                        'user_id' => auth()->id(),
+                    ]);
 
+                    // Reduce stock in items table for this item
+                    $itemRecord = Item::find($defaultItemId);
+                    $itemRecord->current_stock -= $requestedQuantity;
+                    $itemRecord->save();
+
+                    // Reduce stock in ALL item_unit_details with same default_item_id
+                    ItemUnitDetail::where('default_item_id', $defaultItemId)
+                        ->decrement('stock', $requestedQuantity);
+                }
+
+                // Commit the transaction
+                DB::commit();
+
+                return redirect()->route('sales.index')->with('success', 'Sale created successfully.');
+            });
+        } catch (\Exception $e) {
+            // Rollback the transaction
+            DB::rollBack();
+
+            return redirect()->back()->with('error', $e->getMessage());
+        }
     }
     /**
      * Generate the next bill number

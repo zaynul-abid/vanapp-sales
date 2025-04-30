@@ -107,12 +107,17 @@ class ItemController extends Controller
 
         $data = $request->only([
             'name', 'default_category_id', 'default_unit_id', 'tax_id',
-            'purchase_price', 'wholesale_price', 'retail_price',
-            'opening_stock', 'status'
+            'purchase_price', 'wholesale_price', 'retail_price', 'status'
         ]);
 
-        // Add new opening_stock to existing current_stock
-        $data['current_stock'] = $item->current_stock + $request->input('opening_stock');
+        // Only update current_stock if opening_stock has changed
+        if ($request->input('opening_stock') != $item->opening_stock) {
+            $difference = $request->input('opening_stock') - $item->opening_stock;
+            $data['current_stock'] = $item->current_stock + $difference;
+            $data['opening_stock'] = $request->input('opening_stock');
+        } else {
+            $data['opening_stock'] = $item->opening_stock;
+        }
 
         if ($request->hasFile('image')) {
             if ($item->image) {
@@ -135,24 +140,24 @@ class ItemController extends Controller
             'tax_percentage' => $tax ? $tax->tax_percentage : 0,
             'wholesale_price' => $request->input('wholesale_price'),
             'retail_price' => $request->input('retail_price'),
-            'stock' => $data['current_stock'],
             'type' => 'primary',
         ];
 
-        // Update if exists, otherwise create
-        $itemUnitDetail = ItemUnitDetail::where('default_item_id', $item->id)
-            ->where('type', 'primary')
-            ->first();
-
-        if ($itemUnitDetail) {
-            $itemUnitDetail->update($itemUnitDetails);
-        } else {
-            ItemUnitDetail::create($itemUnitDetails);
+        // Only update stock in item_unit_details if it was changed
+        if (isset($data['current_stock'])) {
+            $itemUnitDetails['stock'] = $data['current_stock'];
         }
+
+        $itemUnitDetail = ItemUnitDetail::updateOrCreate(
+            [
+                'default_item_id' => $item->id,
+                'type' => 'primary'
+            ],
+            $itemUnitDetails
+        );
 
         return redirect()->route('items.index')->with('success', 'Item updated successfully.');
     }
-
     public function destroy(Item $item)
     {
         DB::transaction(function () use ($item) {

@@ -47,7 +47,7 @@
             </div>
         @endif
 
-        @if(session('error'))
+            @if(session('error'))
             <div class="flex items-center justify-between p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
                 <div>
                     <strong class="font-bold">Error! </strong> {{ session('error') }}
@@ -68,11 +68,11 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
             <div>
                 <label for="sale_date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                <input type="date" id="sale_date" value="{{ now()->format('Y-m-d') }}" name="sale_date" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <input type="date" id="sale_date" value="{{ now()->format('Y-m-d') }}" name="sale_date" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onkeydown="preventEnter(event)" required>
             </div>
             <div>
                 <label for="sale_time" class="block text-sm font-medium text-gray-700 mb-1">Time</label>
-                <input type="time" id="sale_time" name="sale_time" value="{{ now()->format('H:i') }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <input type="time" id="sale_time" name="sale_time" value="{{ now()->format('H:i') }}" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onkeydown="preventEnter(event)" required>
             </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 relative">
@@ -81,14 +81,14 @@
                 <input type="hidden" id="customer_id" name="customer_id" value="">
                 <input type="text" id="customer_name" name="customer_name"
                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                       required autocomplete="off">
+                       onkeydown="handleCustomerEnter(event)" required autocomplete="off">
                 <div id="customer_suggestions" class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-300 max-h-60 overflow-auto"></div>
             </div>
             <div>
                 <label for="customer_address" class="block text-sm font-medium text-gray-700 mb-1">Customer Address</label>
                 <textarea id="customer_address" name="customer_address"
                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          rows="3"></textarea>
+                          rows="3" onkeydown="preventEnter(event)"></textarea>
             </div>
         </div>
 
@@ -98,45 +98,45 @@
         <h2 class="text-2xl font-semibold text-gray-700 mb-7">Item Details</h2>
         <div class="mb-6">
             <h3 class="text-lg font-medium text-gray-700 mb-4">Add Item</h3>
-            <div class="grid grid-cols-1 md:grid-cols-9 gap-4 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-4">
                 <div>
                     <label for="item_name_input" class="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
-                    <input type="text" id="item_name_input" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="item_name_input" class="min-w-0 flex-grow w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onkeydown="preventEnter(event)">
                 </div>
                 <div>
                     <label for="item_id_input" class="block text-sm font-medium text-gray-700 mb-1">Item ID</label>
-                    <input type="text" id="item_id_input" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="text" id="item_id_input" class="min-w-0 flex-grow w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onkeydown="preventEnter(event)">
                 </div>
                 <div>
                     <label for="rate_input" class="block text-sm font-medium text-gray-700 mb-1">Rate</label>
-                    <input type="number" id="rate_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <input type="number" id="rate_input" step="0.01" class="min-w-0 flex-grow w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onkeydown="preventEnter(event)">
                 </div>
                 <div>
                     <label for="unit_input" class="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-                    <input type="text" id="unit_input" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
+                    <input type="text" id="unit_input" class="min-w-0 flex-grow w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
                 </div>
                 <div>
                     <label for="unit_quantity_input" class="block text-sm font-medium text-gray-700 mb-1">Unit Quantity</label>
-                    <input type="number" id="unit_quantity_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
+                    <input type="number" id="unit_quantity_input" step="0.01" class="min-w-0 flex-grow w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
                 </div>
                 <div>
                     <label for="custom_quantity_input" class="block text-sm font-medium text-gray-700 mb-1">Custom Quantity</label>
-                    <input type="number" id="custom_quantity_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="updateTotalQuantity()">
+                    <input type="number" id="custom_quantity_input" step="0.01" class="min-w-0 flex-grow w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="updateTotalQuantity()" onkeydown="handleItemEnter(event)">
                 </div>
                 <div>
                     <label for="total_quantity_input" class="block text-sm font-medium text-gray-700 mb-1">Total Quantity</label>
-                    <input type="number" id="total_quantity_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
+                    <input type="number" id="total_quantity_input" step="0.01" class="min-w-0 flex-grow w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
                 </div>
                 <div>
                     <label for="tax_percentage_input" class="block text-sm font-medium text-gray-700 mb-1">Tax %</label>
-                    <input type="number" id="tax_percentage_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="0.00">
+                    <input type="number" id="tax_percentage_input" step="0.01" class="min-w-0 flex-grow w Woodrow-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onkeydown="preventEnter(event)">
                 </div>
                 <div>
                     <label for="stock_input" class="block text-sm font-medium text-gray-700 mb-1">Stock</label>
-                    <input type="number" id="stock_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
+                    <input type="number" id="stock_input" step="0.01" class="min-w-0 flex-grow w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
                 </div>
-                <div>
-                    <button type="button" onclick="addItemToTable()" class="mt-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Add</button>
+                <div class="md:col-span-2 flex items-end">
+                    <button type="button" onclick="addItemToTable()" class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Add</button>
                 </div>
             </div>
         </div>
@@ -178,7 +178,7 @@
             </div>
             <div>
                 <label for="discount" class="block text-sm font-medium text-gray-700 mb-1">Discount</label>
-                <input type="number" id="discount" name="discount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="0.00" oninput="updateTotals()">
+                <input type="number" id="discount" name="discount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="updateTotals()" onkeydown="preventEnter(event)">
             </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
@@ -217,19 +217,19 @@
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div>
                 <label for="cash_amount" class="block text-sm font-medium text-gray-700 mb-1">Cash</label>
-                <input type="number" id="cash_amount" name="cash_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="0.00" oninput="updateTotalPayment()">
+                <input type="number" id="cash_amount" name="cash_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="updateTotalPayment()" onkeydown="handlePaymentEnter(event, 'cash_amount')">
             </div>
             <div>
                 <label for="upi_amount" class="block text-sm font-medium text-gray-700 mb-1">UPI</label>
-                <input type="number" id="upi_amount" name="upi_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="0.00" oninput="updateTotalPayment()">
+                <input type="number" id="upi_amount" name="upi_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="updateTotalPayment()" onkeydown="handlePaymentEnter(event, 'upi_amount')">
             </div>
             <div>
                 <label for="card_amount" class="block text-sm font-medium text-gray-700 mb-1">Card</label>
-                <input type="number" id="card_amount" name="card_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="0.00" oninput="updateTotalPayment()">
+                <input type="number" id="card_amount" name="card_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="updateTotalPayment()" onkeydown="handlePaymentEnter(event, 'card_amount')">
             </div>
             <div>
                 <label for="credit_amount" class="block text-sm font-medium text-gray-700 mb-1">Credit</label>
-                <input type="number" id="credit_amount" name="credit_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="0.00" oninput="updateTotalPayment()">
+                <input type="number" id="credit_amount" name="credit_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="updateTotalPayment()" onkeydown="handlePaymentEnter(event, 'credit_amount')">
             </div>
         </div>
         <div class="mt-4">
@@ -241,7 +241,7 @@
         <!-- Narration -->
         <div class="mb-6 mt-6">
             <label for="narration" class="block text-sm font-medium text-gray-700 mb-1">Narration</label>
-            <textarea id="narration" name="narration" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" rows="4"></textarea>
+            <textarea id="narration" name="narration" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" rows="4" onkeydown="preventEnter(event)"></textarea>
         </div>
 
         <!-- Submit Button -->
@@ -254,6 +254,13 @@
 <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
 
 <script>
+    // Function to prevent Enter key from submitting the form
+    function preventEnter(event) {
+        if (event.keyCode === 13) {
+            event.preventDefault();
+        }
+    }
+
     // Function to display client-side error messages
     function showErrorMessage(message) {
         const errorContainer = document.getElementById('client-error-messages');
@@ -276,6 +283,114 @@
         const errorContainer = document.getElementById('client-error-messages');
         errorContainer.innerHTML = '';
     }
+
+    // CUSTOMER SEARCH FUNCTIONALITY
+    $(document).ready(function() {
+        let currentFocus = -1;
+
+        $('#customer_name').on('input', function() {
+            let query = $(this).val().trim();
+            let suggestions = $('#customer_suggestions');
+            suggestions.empty();
+            currentFocus = -1;
+
+            if (query.length >= 2) {
+                $.ajax({
+                    url: '/search-customers',
+                    method: 'GET',
+                    data: { query: query },
+                    dataType: 'json',
+                    success: function(response) {
+                        suggestions.empty();
+                        currentFocus = -1;
+
+                        if (response.length > 0) {
+                            response.forEach(function(customer) {
+                                suggestions.append(
+                                    `<div class="customer-item"
+                                        data-id="${customer.id}"
+                                        data-name="${customer.name}"
+                                        data-address="${customer.address}"
+                                        data-phone="${customer.phone}"
+                                        data-email="${customer.email}">
+                                        <span>${customer.name}</span>
+                                        <span class="customer-details">
+                                            ${customer.phone} • ${customer.email}
+                                        </span>
+                                    </div>`
+                                );
+                            });
+                            suggestions.removeClass('hidden');
+                        } else {
+                            suggestions.addClass('hidden');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching customer data:', error);
+                    }
+                });
+            } else {
+                suggestions.addClass('hidden');
+            }
+        });
+
+        // Handle keyboard navigation for customers
+        $('#customer_name').on('keydown', function(e) {
+            let suggestions = $('#customer_suggestions');
+            let items = suggestions.find('.customer-item');
+
+            if (e.keyCode == 40) { // Down arrow
+                e.preventDefault();
+                currentFocus++;
+                if (currentFocus >= items.length) currentFocus = 0;
+                setActiveCustomer(items);
+            } else if (e.keyCode == 38) { // Up arrow
+                e.preventDefault();
+                currentFocus--;
+                if (currentFocus < 0) currentFocus = items.length - 1;
+                setActiveCustomer(items);
+            } else if (e.keyCode == 13) { // Enter
+                e.preventDefault();
+                if (currentFocus > -1 && items.length > 0) {
+                    selectCustomer(items.eq(currentFocus));
+                } else {
+                    $('#item_name_input').focus();
+                }
+            }
+        });
+
+        function setActiveCustomer(items) {
+            items.removeClass('highlighted');
+            if (currentFocus >= 0 && currentFocus < items.length) {
+                items.eq(currentFocus).addClass('highlighted');
+                items.eq(currentFocus)[0].scrollIntoView({
+                    block: 'nearest',
+                    behavior: 'smooth'
+                });
+            }
+        }
+
+        function selectCustomer(item) {
+            $('#customer_name').val(item.data('name'));
+            $('#customer_id').val(item.data('id'));
+            $('#customer_address').val(item.data('address'));
+            $('#customer_suggestions').addClass('hidden');
+            currentFocus = -1;
+            $('#item_name_input').focus();
+        }
+
+        // Handle mouse selection
+        $(document).on('click', '#customer_suggestions .customer-item', function() {
+            selectCustomer($(this));
+        });
+
+        // Hide suggestions when clicking elsewhere
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#customer_name, #customer_suggestions').length) {
+                $('#customer_suggestions').addClass('hidden');
+            }
+        });
+    });
 
     // ITEM SEARCH FUNCTIONALITY
     $(document).ready(function() {
@@ -356,23 +471,23 @@
         });
 
         // Handle keyboard navigation for items
-        $('#item_name_input').keydown(function(e) {
+        $('#item_name_input').on('keydown', function(e) {
             let suggestions = $('#item_suggestions');
             let items = suggestions.find('.item-suggestion');
 
             if (e.keyCode == 40) { // Down arrow
+                e.preventDefault();
                 itemCurrentFocus++;
                 if (itemCurrentFocus >= items.length) itemCurrentFocus = 0;
                 setActiveItem(items);
-                e.preventDefault();
             } else if (e.keyCode == 38) { // Up arrow
+                e.preventDefault();
                 itemCurrentFocus--;
                 if (itemCurrentFocus < 0) itemCurrentFocus = items.length - 1;
                 setActiveItem(items);
-                e.preventDefault();
             } else if (e.keyCode == 13) { // Enter
-                if (itemCurrentFocus > -1) {
-                    e.preventDefault();
+                e.preventDefault();
+                if (itemCurrentFocus > -1 && items.length > 0) {
                     selectItem(items.eq(itemCurrentFocus));
                 }
             }
@@ -428,107 +543,14 @@
         document.getElementById('total_quantity_input').value = totalQuantity.toFixed(2);
     }
 
-    // CUSTOMER SEARCH FUNCTIONALITY
-    $(document).ready(function() {
-        let currentFocus = -1;
-
-        $('#customer_name').on('input', function() {
-            let query = $(this).val().trim();
-            if (query.length >= 2) {
-                $.ajax({
-                    url: '/search-customers',
-                    method: 'GET',
-                    data: { query: query },
-                    dataType: 'json',
-                    success: function(response) {
-                        let suggestions = $('#customer_suggestions');
-                        suggestions.empty();
-                        currentFocus = -1;
-
-                        if (response.length > 0) {
-                            response.forEach(function(customer) {
-                                suggestions.append(
-                                    `<div class="customer-item"
-                                    data-id="${customer.id}"
-                                    data-name="${customer.name}"
-                                    data-address="${customer.address}"
-                                    data-phone="${customer.phone}"
-                                    data-email="${customer.email}">
-                                    <span>${customer.name}</span>
-                                    <span class="customer-details">
-                                        ${customer.phone} • ${customer.email}
-                                    </span>
-                                </div>`
-                                );
-                            });
-                            suggestions.removeClass('hidden');
-                        } else {
-                            suggestions.addClass('hidden');
-                        }
-                    },
-                    error: function(xhr, status, error) {
-                        console.error('Error fetching customer data:', error);
-                    }
-                });
-            } else {
-                $('#customer_suggestions').addClass('hidden');
-            }
-        });
-
-        // Handle keyboard navigation
-        $('#customer_name').keydown(function(e) {
-            let suggestions = $('#customer_suggestions');
-            let items = suggestions.find('.customer-item');
-
-            if (e.keyCode == 40) { // Down arrow
-                currentFocus++;
-                if (currentFocus >= items.length) currentFocus = 0;
-                setActive(items);
-                e.preventDefault();
-            } else if (e.keyCode == 38) { // Up arrow
-                currentFocus--;
-                if (currentFocus < 0) currentFocus = items.length - 1;
-                setActive(items);
-                e.preventDefault();
-            } else if (e.keyCode == 13) { // Enter
-                if (currentFocus > -1) {
-                    e.preventDefault();
-                    selectCustomer(items.eq(currentFocus));
-                }
-            }
-        });
-
-        function setActive(items) {
-            items.removeClass('highlighted');
-            if (currentFocus >= 0 && currentFocus < items.length) {
-                items.eq(currentFocus).addClass('highlighted');
-                items.eq(currentFocus)[0].scrollIntoView({
-                    block: 'nearest',
-                    behavior: 'smooth'
-                });
-            }
+    // Handle Enter key on custom_quantity_input
+    function handleItemEnter(e) {
+        if (e.keyCode === 13) {
+            e.preventDefault();
+            addItemToTable();
+            $('#item_name_input').focus();
         }
-
-        function selectCustomer(item) {
-            $('#customer_name').val(item.data('name'));
-            $('#customer_id').val(item.data('id'));
-            $('#customer_address').val(item.data('address'));
-            $('#customer_suggestions').addClass('hidden');
-            currentFocus = -1;
-        }
-
-        // Handle mouse selection
-        $(document).on('click', '#customer_suggestions .customer-item', function() {
-            selectCustomer($(this));
-        });
-
-        // Hide suggestions when clicking elsewhere
-        $(document).on('click', function(e) {
-            if (!$(e.target).closest('#customer_name, #customer_suggestions').length) {
-                $('#customer_suggestions').addClass('hidden');
-            }
-        });
-    });
+    }
 
     // ITEM TABLE MANAGEMENT
     function addItemToTable() {
@@ -546,13 +568,29 @@
         const retailPrice = parseFloat($('#rate_input').data('retail')) || 0;
         const wholesalePrice = parseFloat($('#rate_input').data('wholesale')) || 0;
 
+        // Validate required fields
         if (!itemId || !itemName || rate <= 0 || unitQuantity <= 0 || customQuantity <= 0 || totalQuantity <= 0 || !unit) {
             showErrorMessage('Please fill in all required item fields with valid values.');
             return;
         }
 
-        if (totalQuantity > stock) {
-            showErrorMessage(`Total quantity (${totalQuantity.toFixed(2)}) exceeds available stock (${stock.toFixed(2)}) for item ${itemName}.`);
+        // Calculate total quantity for this item already in the table
+        let existingQuantity = 0;
+        const rows = document.querySelectorAll('.item-row');
+        rows.forEach(row => {
+            const rowItemId = row.querySelector('input[name^="items["][name$="[item_id]"]').value;
+            const rowTotalQuantity = parseFloat(row.querySelector('input[name^="items["][name$="[total_quantity]"]').value) || 0;
+            if (rowItemId === itemId) {
+                existingQuantity += rowTotalQuantity;
+            }
+        });
+
+        // Add the new quantity to check against stock
+        const totalItemQuantity = existingQuantity + totalQuantity;
+
+        // Validate stock
+        if (totalItemQuantity > stock) {
+            showErrorMessage(`Total quantity (${totalItemQuantity.toFixed(2)}) for item ${itemName} exceeds available stock (${stock.toFixed(2)}).`);
             return;
         }
 
@@ -579,7 +617,7 @@
                         <div class="p-2 hover:bg-blue-50 cursor-pointer" data-price="${wholesalePrice}">Wholesale: ${wholesalePrice.toFixed(2)}</div>
                     </div>
                     <input type="hidden" name="items[${rowCount}][rate]" value="${rate.toFixed(2)}">
-                    <input type="hidden" nameGrowing seasonitems[${rowCount}][price_type]" value="${priceType}">
+                    <input type="hidden" name="items[${rowCount}][price_type]" value="${priceType}">
                     <input type="hidden" name="items[${rowCount}][unit_price]" value="${rate.toFixed(2)}">
                 </td>
                 <td class="py-2 px-4 border-b">
@@ -642,7 +680,7 @@
         document.getElementById('custom_quantity_input').value = '';
         document.getElementById('total_quantity_input').value = '';
         document.getElementById('unit_input').value = '';
-        document.getElementById('tax_percentage_input').value = '0.00';
+        document.getElementById('tax_percentage_input').value = '';
         document.getElementById('stock_input').value = '';
 
         updateTotals();
@@ -723,29 +761,29 @@
 
         if (paymentOption === 'Cash') {
             cashInput.value = netTotalAmount.toFixed(2);
-            upiInput.value = '0.00';
-            cardInput.value = '0.00';
-            creditInput.value = '0.00';
+            upiInput.value = '';
+            cardInput.value = '';
+            creditInput.value = '';
         } else if (paymentOption === 'UPI') {
-            cashInput.value = '0.00';
+            cashInput.value = '';
             upiInput.value = netTotalAmount.toFixed(2);
-            cardInput.value = '0.00';
-            creditInput.value = '0.00';
+            cardInput.value = '';
+            creditInput.value = '';
         } else if (paymentOption === 'Card') {
-            cashInput.value = '0.00';
-            upiInput.value = '0.00';
+            cashInput.value = '';
+            upiInput.value = '';
             cardInput.value = netTotalAmount.toFixed(2);
-            creditInput.value = '0.00';
+            creditInput.value = '';
         } else if (paymentOption === 'Credit') {
-            cashInput.value = '0.00';
-            upiInput.value = '0.00';
-            cardInput.value = '0.00';
+            cashInput.value = '';
+            upiInput.value = '';
+            cardInput.value = '';
             creditInput.value = netTotalAmount.toFixed(2);
         } else if (paymentOption === 'Other') {
-            cashInput.value = '0.00';
-            upiInput.value = '0.00';
-            cardInput.value = '0.00';
-            creditInput.value = '0.00';
+            cashInput.value = '';
+            upiInput.value = '';
+            cardInput.value = '';
+            creditInput.value = '';
         }
 
         updateTotalPayment();
@@ -765,11 +803,38 @@
             const remainingAmount = netTotalAmount - nonCreditTotal;
             creditInput.value = remainingAmount.toFixed(2);
         } else {
-            creditInput.value = '0.00';
+            creditInput.value = '';
         }
 
-        const totalPayment = nonCreditTotal + parseFloat(creditInput.value);
+        const totalPayment = nonCreditTotal + (parseFloat(creditInput.value) || 0);
         document.getElementById('total_payment_amount').value = totalPayment.toFixed(2);
+    }
+
+    // Handle Enter key on payment inputs
+    function handlePaymentEnter(event, currentId) {
+        if (event.keyCode === 13) {
+            event.preventDefault();
+            const netTotalAmount = parseFloat(document.getElementById('net_total_amount').value) || 0;
+            const totalPayment = parseFloat(document.getElementById('total_payment_amount').value) || 0;
+
+            if (Math.abs(netTotalAmount - totalPayment) <= 0.01) {
+                return; // Payment is complete, do not move focus
+            }
+
+            const paymentInputs = ['cash_amount', 'upi_amount', 'card_amount', 'credit_amount'];
+            const currentIndex = paymentInputs.indexOf(currentId);
+            let nextIndex = (currentIndex + 1) % paymentInputs.length;
+
+            // Find the next non-filled input
+            for (let i = 0; i < paymentInputs.length; i++) {
+                const input = document.getElementById(paymentInputs[nextIndex]);
+                if (!input.value || parseFloat(input.value) === 0) {
+                    input.focus();
+                    break;
+                }
+                nextIndex = (nextIndex + 1) % paymentInputs.length;
+            }
+        }
     }
 
     // FORM VALIDATION
@@ -781,14 +846,29 @@
         const rows = document.querySelectorAll('.item-row');
         let isValid = true;
 
-        // Validate stock for each item
-        for (let row of rows) {
+        // Group items by item_id to check cumulative stock
+        const itemQuantities = {};
+        const itemDetails = {};
+
+        rows.forEach(row => {
+            const itemId = row.querySelector('input[name^=" Judgement-items["][name$="[item_id]"]').value;
             const itemName = row.querySelector('input[name^="items["][name$="[item_name]"]').value;
             const totalQuantity = parseFloat(row.querySelector('input[name^="items["][name$="[total_quantity]"]').value) || 0;
             const stock = parseFloat(row.querySelector('input[name^="items["][name$="[stock]"]').value) || 0;
 
+            if (!itemQuantities[itemId]) {
+                itemQuantities[itemId] = 0;
+                itemDetails[itemId] = { name: itemName, stock: stock };
+            }
+            itemQuantities[itemId] += totalQuantity;
+        });
+
+        // Validate stock for each unique item
+        for (const itemId in itemQuantities) {
+            const totalQuantity = itemQuantities[itemId];
+            const { name, stock } = itemDetails[itemId];
             if (totalQuantity > stock) {
-                showErrorMessage(`Total quantity (${totalQuantity.toFixed(2)}) exceeds available stock (${stock.toFixed(2)}) for item ${itemName}.`);
+                showErrorMessage(`Total quantity (${totalQuantity.toFixed(2)}) for item ${name} exceeds available stock (${stock.toFixed(2)}).`);
                 isValid = false;
             }
         }
@@ -800,6 +880,22 @@
 
         return isValid;
     }
+
+    // Clear default values on focus for amount fields
+    $(document).ready(function() {
+        const amountInputs = ['rate_input', 'tax_percentage_input', 'discount', 'cash_amount', 'upi_amount', 'card_amount', 'credit_amount'];
+        amountInputs.forEach(id => {
+            $('#' + id).on('focus', function() {
+                if (this.value === '0.00') {
+                    this.value = '';
+                }
+            }).on('blur', function() {
+                if (!this.value) {
+                    this.value = '';
+                }
+            });
+        });
+    });
 </script>
 </body>
 </html>
