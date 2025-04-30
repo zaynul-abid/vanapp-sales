@@ -35,27 +35,31 @@
 <div class="max-w-7xl mx-auto bg-white p-8 rounded-lg shadow-md">
     <h1 class="text-3xl font-bold text-gray-800 mb-8">Sale Entry</h1>
 
-    @if(session('success'))
-        <div class="flex items-center justify-between p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg" role="alert">
-            <div>
-                <strong class="font-bold">Success! </strong> {{ session('success') }}
+    <div id="message-section">
+        @if(session('success'))
+            <div class="flex items-center justify-between p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg" role="alert">
+                <div>
+                    <strong class="font-bold">Success! </strong> {{ session('success') }}
+                </div>
+                <button type="button" class="text-green-700 hover:text-green-900" onclick="this.parentElement.remove()" aria-label="Close">
+                    ✖
+                </button>
             </div>
-            <button type="button" class="text-green-700 hover:text-green-900" onclick="this.parentElement.remove()" aria-label="Close">
-                ✖
-            </button>
-        </div>
-    @endif
+        @endif
 
-    @if(session('error'))
-        <div class="flex items-center justify-between p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
-            <div>
-                <strong class="font-bold">Error! </strong> {{ session('error') }}
+        @if(session('error'))
+            <div class="flex items-center justify-between p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
+                <div>
+                    <strong class="font-bold">Error! </strong> {{ session('error') }}
+                </div>
+                <button type="button" class="text-red-700 hover:text-red-900" onclick="this.parentElement.remove()" aria-label="Close">
+                    ✖
+                </button>
             </div>
-            <button type="button" class="text-red-700 hover:text-red-900" onclick="this.parentElement.remove()" aria-label="Close">
-                ✖
-            </button>
-        </div>
-    @endif
+        @endif
+
+        <div id="client-error-messages"></div>
+    </div>
 
     <form action="{{route('sales.store')}}" method="POST" onsubmit="return validateForm()">
         @csrf
@@ -94,7 +98,7 @@
         <h2 class="text-2xl font-semibold text-gray-700 mb-7">Item Details</h2>
         <div class="mb-6">
             <h3 class="text-lg font-medium text-gray-700 mb-4">Add Item</h3>
-            <div class="grid grid-cols-1 md:grid-cols-8 gap-4 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-9 gap-4 mb-4">
                 <div>
                     <label for="item_name_input" class="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
                     <input type="text" id="item_name_input" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -128,6 +132,10 @@
                     <input type="number" id="tax_percentage_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="0.00">
                 </div>
                 <div>
+                    <label for="stock_input" class="block text-sm font-medium text-gray-700 mb-1">Stock</label>
+                    <input type="number" id="stock_input" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
+                </div>
+                <div>
                     <button type="button" onclick="addItemToTable()" class="mt-6 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Add</button>
                 </div>
             </div>
@@ -144,6 +152,7 @@
                     <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Custom Quantity</th>
                     <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Total Quantity</th>
                     <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Tax %</th>
+                    <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Stock</th>
                     <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Total Amount</th>
                     <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Actions</th>
                 </tr>
@@ -243,7 +252,31 @@
 </div>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
+
 <script>
+    // Function to display client-side error messages
+    function showErrorMessage(message) {
+        const errorContainer = document.getElementById('client-error-messages');
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'flex items-center justify-between p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg';
+        errorDiv.setAttribute('role', 'alert');
+        errorDiv.innerHTML = `
+            <div>
+                <strong class="font-bold">Error! </strong> ${message}
+            </div>
+            <button type="button" class="text-red-700 hover:text-red-900" onclick="this.parentElement.remove()" aria-label="Close">
+                ✖
+            </button>
+        `;
+        errorContainer.appendChild(errorDiv);
+    }
+
+    // Function to clear all client-side error messages
+    function clearErrorMessages() {
+        const errorContainer = document.getElementById('client-error-messages');
+        errorContainer.innerHTML = '';
+    }
+
     // ITEM SEARCH FUNCTIONALITY
     $(document).ready(function() {
         // Create suggestions container for items
@@ -274,7 +307,6 @@
                     data: { query: query },
                     dataType: 'json',
                     success: function(response) {
-                        console.log('Search response:', response); // Debug: Log the response
                         suggestions.empty();
                         itemCurrentFocus = -1;
 
@@ -288,14 +320,16 @@
                                         data-wholesale="${item.wholesale_price}"
                                         data-unit="${item.unit_name}"
                                         data-unit-quantity="${item.quantity || 1}"
-                                        data-tax="${item.tax_percentage}">
+                                        data-tax="${item.tax_percentage}"
+                                        data-stock="${item.stock || 0}">
                                         <div class="font-medium">${item.name}</div>
                                         <div class="text-sm text-gray-600">
                                             ${item.unit_name} |
                                             Retail: ₹${item.retail_price} |
                                             Wholesale: ₹${item.wholesale_price} |
                                             Unit Qty: ${item.unit_quantity || 1} |
-                                            Tax: ${item.tax_percentage}%
+                                            Tax: ${item.tax_percentage}% |
+                                            Stock: ${item.stock || 0}
                                         </div>
                                     </div>`
                                 );
@@ -359,9 +393,10 @@
             $('#item_name_input').val(item.data('name'));
             $('#item_id_input').val(item.data('id'));
             $('#rate_input').val(item.data('retail'));
-            $('#unit_input').val(item.data('unit') || 'Cartoon'); // Set unit name from database
-            $('#unit_quantity_input').val(item.data('unit-quantity')); // Set unit quantity from database
+            $('#unit_input').val(item.data('unit') || 'Cartoon');
+            $('#unit_quantity_input').val(item.data('unit-quantity'));
             $('#tax_percentage_input').val(item.data('tax'));
+            $('#stock_input').val(item.data('stock'));
             $('#rate_input').data('retail', item.data('retail'));
             $('#rate_input').data('wholesale', item.data('wholesale'));
             $('#custom_quantity_input').val('');
@@ -497,6 +532,8 @@
 
     // ITEM TABLE MANAGEMENT
     function addItemToTable() {
+        clearErrorMessages();
+
         const itemId = document.getElementById('item_id_input').value;
         const itemName = document.getElementById('item_name_input').value;
         let rate = parseFloat(document.getElementById('rate_input').value) || 0;
@@ -505,11 +542,17 @@
         const customQuantity = parseFloat(document.getElementById('custom_quantity_input').value) || 0;
         const totalQuantity = parseFloat(document.getElementById('total_quantity_input').value) || 0;
         const taxPercentage = parseFloat(document.getElementById('tax_percentage_input').value) || 0;
+        const stock = parseFloat(document.getElementById('stock_input').value) || 0;
         const retailPrice = parseFloat($('#rate_input').data('retail')) || 0;
         const wholesalePrice = parseFloat($('#rate_input').data('wholesale')) || 0;
 
         if (!itemId || !itemName || rate <= 0 || unitQuantity <= 0 || customQuantity <= 0 || totalQuantity <= 0 || !unit) {
-            alert('Please fill in all required item fields with valid values.');
+            showErrorMessage('Please fill in all required item fields with valid values.');
+            return;
+        }
+
+        if (totalQuantity > stock) {
+            showErrorMessage(`Total quantity (${totalQuantity.toFixed(2)}) exceeds available stock (${stock.toFixed(2)}) for item ${itemName}.`);
             return;
         }
 
@@ -536,7 +579,7 @@
                         <div class="p-2 hover:bg-blue-50 cursor-pointer" data-price="${wholesalePrice}">Wholesale: ${wholesalePrice.toFixed(2)}</div>
                     </div>
                     <input type="hidden" name="items[${rowCount}][rate]" value="${rate.toFixed(2)}">
-                    <input type="hidden" name="items[${rowCount}][price_type]" value="${priceType}">
+                    <input type="hidden" nameGrowing seasonitems[${rowCount}][price_type]" value="${priceType}">
                     <input type="hidden" name="items[${rowCount}][unit_price]" value="${rate.toFixed(2)}">
                 </td>
                 <td class="py-2 px-4 border-b">
@@ -553,6 +596,9 @@
                 </td>
                 <td class="py-2 px-4 border-b">
                     <input type="hidden" name="items[${rowCount}][tax_percentage]" value="${taxPercentage.toFixed(2)}">${taxPercentage.toFixed(2)}
+                </td>
+                <td class="py-2 px-4 border-b">
+                    <input type="hidden" name="items[${rowCount}][stock]" value="${stock.toFixed(2)}">${stock.toFixed(2)}
                 </td>
                 <td class="py-2 px-4 border-b">
                     <input type="hidden" name="items[${rowCount}][total_amount]" value="${totalAmount.toFixed(2)}">${totalAmount.toFixed(2)}
@@ -597,6 +643,7 @@
         document.getElementById('total_quantity_input').value = '';
         document.getElementById('unit_input').value = '';
         document.getElementById('tax_percentage_input').value = '0.00';
+        document.getElementById('stock_input').value = '';
 
         updateTotals();
     }
@@ -727,15 +774,31 @@
 
     // FORM VALIDATION
     function validateForm() {
+        clearErrorMessages();
+
         const netTotalAmount = parseFloat(document.getElementById('net_total_amount').value) || 0;
         const totalPayment = parseFloat(document.getElementById('total_payment_amount').value) || 0;
+        const rows = document.querySelectorAll('.item-row');
+        let isValid = true;
 
-        if (Math.abs(netTotalAmount - totalPayment) > 0.01) {
-            alert('Total payment amount must equal the net total amount.');
-            return false;
+        // Validate stock for each item
+        for (let row of rows) {
+            const itemName = row.querySelector('input[name^="items["][name$="[item_name]"]').value;
+            const totalQuantity = parseFloat(row.querySelector('input[name^="items["][name$="[total_quantity]"]').value) || 0;
+            const stock = parseFloat(row.querySelector('input[name^="items["][name$="[stock]"]').value) || 0;
+
+            if (totalQuantity > stock) {
+                showErrorMessage(`Total quantity (${totalQuantity.toFixed(2)}) exceeds available stock (${stock.toFixed(2)}) for item ${itemName}.`);
+                isValid = false;
+            }
         }
 
-        return true;
+        if (Math.abs(netTotalAmount - totalPayment) > 0.01) {
+            showErrorMessage('Total payment amount must equal the net total amount.');
+            isValid = false;
+        }
+
+        return isValid;
     }
 </script>
 </body>

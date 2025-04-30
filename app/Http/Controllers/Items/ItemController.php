@@ -183,6 +183,7 @@ class ItemController extends Controller
                 'quantity',
                 'tax_percentage',
                 'retail_price',
+                'stock',
                 'wholesale_price'
             )
             ->limit(10)
