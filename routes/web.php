@@ -65,7 +65,12 @@ Route::middleware(['auth', 'usertype:employee'])->group(function () {
     Route::post('/vans/{van}/unassign', [VanController::class, 'unassign'])->name('vans.unassign');
 
     Route::resource('items', ItemController::class);
-    Route::resource('sales', SalesController::class);
+    Route::resource('sales', SalesController::class)->only([
+        'index', 'create', 'store',
+    ]);
+    Route::get('sales/search-bills', [SalesController::class, 'searchBills'])->name('sales.search-bills');
+    Route::get('sales/load-bill/{id}', [SalesController::class, 'loadBill'])->name('sales.load-bill');
+    Route::put('sales/update-bill/{id}', [SalesController::class, 'updateBill'])->name('sales.update-bill');
 
     Route::resource('customers', CustomerController::class);
 

@@ -28,9 +28,18 @@ class Sale extends Model
         'financial_year',
         'van_id',
         'user_id',
+        'unit_quantity',
+        'custom_quantity',
+        'total_quantity',
+        'tax_percentage',
+        'stock',
     ];
     public function saleMaster()
     {
         return $this->belongsTo(SaleMaster::class, 'sale_master_id', 'id');
+    }
+    public function itemUnitDetail()
+    {
+        return $this->belongsTo(ItemUnitDetail::class, 'item_id');
     }
 }

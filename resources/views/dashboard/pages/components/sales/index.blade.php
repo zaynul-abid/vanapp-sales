@@ -59,6 +59,20 @@
         @endif
 
         <div id="client-error-messages"></div>
+
+            <div class="mb-6">
+                <div class="flex items-center gap-4">
+                    <div class="flex-1 relative">
+                        <label for="bill_search" class="block text-sm font-medium text-gray-700 mb-1">Search Bill</label>
+                        <input type="text" id="bill_search" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search by bill no or customer name">
+                        <div id="bill_suggestions" class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-300 max-h-60 overflow-auto"></div>
+                    </div>
+                    <div class="mt-5">
+                        <button type="button" id="clear_bill" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 hidden">Clear</button>
+                    </div>
+                </div>
+                <input type="hidden" id="current_bill_id" name="current_bill_id" value="">
+            </div>
     </div>
 
     <form action="{{route('sales.store')}}" method="POST" onsubmit="return validateForm()">
@@ -881,6 +895,8 @@
         return isValid;
     }
 
+
+
     // Clear default values on focus for amount fields
     $(document).ready(function() {
         const amountInputs = ['rate_input', 'tax_percentage_input', 'discount', 'cash_amount', 'upi_amount', 'card_amount', 'credit_amount'];
@@ -896,6 +912,232 @@
             });
         });
     });
+
+    // Bill Search Functionality
+    $(document).ready(function() {
+        let billCurrentFocus = -1;
+
+        $('#bill_search').on('input', function() {
+            let query = $(this).val().trim();
+            let suggestions = $('#bill_suggestions');
+            suggestions.empty();
+            billCurrentFocus = -1;
+
+            if (query.length >= 2) {
+                $.ajax({
+                    url: '{{ route("sales.search-bills") }}',
+                    method: 'GET',
+                    data: {
+                        query: query,
+                        _token: $('meta[name="csrf-token"]').attr('content')
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        suggestions.empty();
+                        billCurrentFocus = -1;
+
+                        if (response && response.length > 0) {
+                            response.forEach(function(bill) {
+                                suggestions.append(
+                                    `<div class="bill-item p-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100"
+                                    data-id="${bill.id}"
+                                    data-bill-no="${bill.bill_no}"
+                                    data-date="${bill.sale_date}"
+                                    data-customer-name="${bill.customer_name}"
+                                    data-net-total="${bill.net_total_amount}">
+                                    <div class="font-medium">${bill.bill_no}</div>
+                                    <div class="text-sm text-gray-600">
+                                        ${bill.customer_name} • ${bill.sale_date} • ₹${bill.net_total_amount}
+                                    </div>
+                                </div>`
+                                );
+                            });
+                            suggestions.removeClass('hidden');
+                        } else {
+                            suggestions.append(
+                                `<div class="p-2 text-gray-600">No matching bills found</div>`
+                            );
+                            suggestions.removeClass('hidden');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error fetching bill data:', error);
+                        suggestions.html(
+                            `<div class="p-2 text-red-600">Error loading bills</div>`
+                        );
+                    }
+                });
+            } else {
+                suggestions.addClass('hidden');
+            }
+        });
+
+        // Handle bill selection
+        $(document).on('click', '.bill-item', function() {
+            const billId = $(this).data('id');
+            const billNo = $(this).data('bill-no');
+
+            // Set the selected bill in the search field
+            $('#bill_search').val(billNo);
+            $('#current_bill_id').val(billId);
+            $('#bill_suggestions').addClass('hidden');
+
+            // Show clear button
+            $('#clear_bill').removeClass('hidden');
+
+            // Load bill details
+            loadBillDetails(billId);
+        });
+
+        // Clear bill selection
+        $('#clear_bill').on('click', function() {
+            $('#current_bill_id').val('');
+            $('#bill_search').val('');
+            $(this).addClass('hidden');
+            clearForm();
+        });
+
+        // Hide suggestions when clicking elsewhere
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#bill_search, #bill_suggestions').length) {
+                $('#bill_suggestions').addClass('hidden');
+            }
+        });
+    });
+
+    function loadBillDetails(billId) {
+        // Show loading indicator
+        $('#bill_suggestions').html('<div class="p-2 text-gray-600">Loading bill details...</div>');
+        $('#bill_suggestions').removeClass('hidden');
+
+        $.ajax({
+            url: `/sales/load-bill/${billId}`,
+            method: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                console.log('Full API Response:', response);
+                // Fill master details
+                const master = response.master;
+
+                $('#sale_date').val(master.sale_date);
+                $('#sale_time').val(master.sale_time);
+                $('#customer_id').val(master.customer_id);
+                $('#customer_name').val(master.customer_name);
+                $('#customer_address').val(response.master.customer.address || '');
+                $('#payment_option').val(master.sale_type);
+                $('#discount').val(master.discount || '');
+                $('#narration').val(master.narration || '');
+
+                // Fill payment details
+                $('#cash_amount').val(master.cash_amount || '');
+                $('#upi_amount').val(master.upi_amount || '');
+                $('#card_amount').val(master.card_amount || '');
+                $('#credit_amount').val(master.credit_amount || '');
+
+                // Clear existing items
+                $('#item-rows').empty();
+
+                // Add items to table
+                if (response.items && response.items.length > 0) {
+                    response.items.forEach(function(item) {
+                        addItemFromBill(item);
+                    });
+                }
+
+                // Update totals
+                updateTotals();
+
+                // Update form action to point to update route
+                $('form').attr('action', `/sales/update-bill/${billId}`);
+                $('form').attr('method', 'POST');
+                // Add method spoofing for PUT
+                $('form').find('input[name="_method"]').remove();
+                $('form').append('<input type="hidden" name="_method" value="PUT">');
+
+                // Change submit button text
+                $('form button[type="submit"]').text('Update Sale');
+
+                $('#bill_suggestions').addClass('hidden');
+            },
+            error: function(xhr, status, error) {
+                console.error('Error loading bill details:', error);
+                showErrorMessage('Error loading bill details. Please try again.');
+                $('#bill_suggestions').addClass('hidden');
+            }
+        });
+    }
+
+    function addItemFromBill(item) {
+        const rowCount = $('#item-rows tr').length;
+
+        const row = `
+        <tr class="item-row">
+            <td class="py-2 px-4 border-b">
+                <input type="hidden" name="items[${rowCount}][item_id]" value="${item.item_id}">${item.item_id}
+            </td>
+            <td class="py-2 px-4 border-b">
+                <input type="hidden" name="items[${rowCount}][item_name]" value="${item.item_name}">${item.item_name}
+            </td>
+            <td class="py-2 px-4 border-b relative">
+                <div class="rate-display">${parseFloat(item.rate).toFixed(2)}</div>
+                <input type="hidden" name="items[${rowCount}][rate]" value="${parseFloat(item.rate).toFixed(2)}">
+                <input type="hidden" name="items[${rowCount}][price_type]" value="${item.price_type || 'Retail'}">
+                <input type="hidden" name="items[${rowCount}][unit_price]" value="${parseFloat(item.unit_price || item.rate).toFixed(2)}">
+            </td>
+            <td class="py-2 px-4 border-b">
+                <input type="hidden" name="items[${rowCount}][unit]" value="${item.unit}">${item.unit}
+            </td>
+            <td class="py-2 px-4 border-b">
+                <input type="hidden" name="items[${rowCount}][unit_quantity]" value="${parseFloat(item.unit_quantity || 1).toFixed(2)}">${parseFloat(item.unit_quantity || 1).toFixed(2)}
+            </td>
+            <td class="py-2 px-4 border-b">
+                <input type="hidden" name="items[${rowCount}][custom_quantity]" value="${parseFloat(item.custom_quantity || item.total_quantity / (item.unit_quantity || 1)).toFixed(2)}">${parseFloat(item.custom_quantity || item.total_quantity / (item.unit_quantity || 1)).toFixed(2)}
+            </td>
+            <td class="py-2 px-4 border-b">
+                <input type="hidden" name="items[${rowCount}][total_quantity]" value="${parseFloat(item.total_quantity).toFixed(2)}">${parseFloat(item.total_quantity).toFixed(2)}
+            </td>
+            <td class="py-2 px-4 border-b">
+                <input type="hidden" name="items[${rowCount}][tax_percentage]" value="${parseFloat(item.tax_percentage || 0).toFixed(2)}">${parseFloat(item.tax_percentage || 0).toFixed(2)}
+            </td>
+                <td class="py-2 px-4 border-b">
+                    <input type="hidden" name="items[${rowCount}][stock]" value="${parseFloat(item.stock || 0).toFixed(2)}">${parseFloat(item.stock || 0).toFixed(2)}
+                </td>
+            <td class="py-2 px-4 border-b">
+                <input type="hidden" name="items[${rowCount}][total_amount]" value="${parseFloat(item.total_amount).toFixed(2)}">${parseFloat(item.total_amount).toFixed(2)}
+                <input type="hidden" name="items[${rowCount}][gross_amount]" value="${parseFloat(item.gross_amount).toFixed(2)}">
+                <input type="hidden" name="items[${rowCount}][tax_amount]" value="${parseFloat(item.tax_amount).toFixed(2)}">
+            </td>
+            <td class="py-2 px-4 border-b">
+                <button type="button" onclick="removeItemRow(this)" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Remove</button>
+            </td>
+        </tr>`;
+
+        $('#item-rows').append(row);
+    }
+
+    function clearForm() {
+        // Reset form to create new sale
+        $('form').attr('action', '{{ route("sales.store") }}');
+        $('form').attr('method', 'POST');
+        $('form').find('input[name="_method"]').remove();
+        $('form button[type="submit"]').text('Save Sale');
+
+        // Clear all fields except date/time
+        $('#customer_id').val('');
+        $('#customer_name').val('');
+        $('#customer_address').val('');
+        $('#payment_option').val('Cash');
+        $('#discount').val('');
+        $('#narration').val('');
+        $('#cash_amount').val('');
+        $('#upi_amount').val('');
+        $('#card_amount').val('');
+        $('#credit_amount').val('');
+        $('#item-rows').empty();
+
+        // Reset totals
+        updateTotals();
+    }
 </script>
 </body>
 </html>
