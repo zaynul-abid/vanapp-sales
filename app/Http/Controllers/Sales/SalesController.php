@@ -303,7 +303,7 @@ class SalesController extends Controller
             }
 
             // Delete existing Sale records
-            Sale::where('sale_master_id', $saleMaster->id)->delete();
+          Sale::where('sale_master_id', $saleMaster->id)->delete();
 
             // Update SaleMaster
             $saleMaster->update([

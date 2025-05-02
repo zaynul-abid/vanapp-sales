@@ -33,7 +33,14 @@
 
 <body class="bg-gray-100 p-6">
 <div class="max-w-7xl mx-auto bg-white p-8 rounded-lg shadow-md">
-    <h1 class="text-3xl font-bold text-gray-800 mb-8">Sale Entry</h1>
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Sale Entry</h1>
+        <a href="{{route('employee.dashboard')}}"
+           class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition duration-150 ease-in-out"
+           aria-label="Back to Employee Dashboard">
+            Back
+        </a>
+    </div>
 
     <div id="message-section">
         @if(session('success'))
@@ -47,7 +54,7 @@
             </div>
         @endif
 
-            @if(session('error'))
+        @if(session('error'))
             <div class="flex items-center justify-between p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert">
                 <div>
                     <strong class="font-bold">Error! </strong> {{ session('error') }}
@@ -60,19 +67,19 @@
 
         <div id="client-error-messages"></div>
 
-            <div class="mb-6">
-                <div class="flex items-center gap-4">
-                    <div class="flex-1 relative">
-                        <label for="bill_search" class="block text-sm font-medium text-gray-700 mb-1">Search Bill</label>
-                        <input type="text" id="bill_search" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search by bill no or customer name">
-                        <div id="bill_suggestions" class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-300 max-h-60 overflow-auto"></div>
-                    </div>
-                    <div class="mt-5">
-                        <button type="button" id="clear_bill" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 hidden">Clear</button>
-                    </div>
+        <div class="mb-6">
+            <div class="flex items-center gap-4">
+                <div class="flex-1 relative">
+                    <label for="bill_search" class="block text-sm font-medium text-gray-700 mb-1">Search Bill</label>
+                    <input type="text" id="bill_search" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search by bill no or customer name">
+                    <div id="bill_suggestions" class="hidden absolute z-10 mt-1 w-full bg-white shadow-lg rounded-md border border-gray-300 max-h-60 overflow-auto"></div>
                 </div>
-                <input type="hidden" id="current_bill_id" name="current_bill_id" value="">
+                <div class="mt-5">
+                    <button type="button" id="clear_bill" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 hidden">Clear</button>
+                </div>
             </div>
+            <input type="hidden" id="current_bill_id" name="current_bill_id" value="">
+        </div>
     </div>
 
     <form action="{{route('sales.store')}}" method="POST" onsubmit="return validateForm()">
@@ -143,7 +150,7 @@
                 </div>
                 <div>
                     <label for="tax_percentage_input" class="block text-sm font-medium text-gray-700 mb-1">Tax %</label>
-                    <input type="number" id="tax_percentage_input" step="0.01" class="min-w-0 flex-grow w Woodrow-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onkeydown="preventEnter(event)">
+                    <input type="number" id="tax_percentage_input" step="0.01" class="min-w-0 flex-grow w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onkeydown="preventEnter(event)">
                 </div>
                 <div>
                     <label for="stock_input" class="block text-sm font-medium text-gray-700 mb-1">Stock</label>
@@ -266,7 +273,6 @@
 </div>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
-
 <script>
     // Function to prevent Enter key from submitting the form
     function preventEnter(event) {
@@ -588,26 +594,6 @@
             return;
         }
 
-        // Calculate total quantity for this item already in the table
-        let existingQuantity = 0;
-        const rows = document.querySelectorAll('.item-row');
-        rows.forEach(row => {
-            const rowItemId = row.querySelector('input[name^="items["][name$="[item_id]"]').value;
-            const rowTotalQuantity = parseFloat(row.querySelector('input[name^="items["][name$="[total_quantity]"]').value) || 0;
-            if (rowItemId === itemId) {
-                existingQuantity += rowTotalQuantity;
-            }
-        });
-
-        // Add the new quantity to check against stock
-        const totalItemQuantity = existingQuantity + totalQuantity;
-
-        // Validate stock
-        if (totalItemQuantity > stock) {
-            showErrorMessage(`Total quantity (${totalItemQuantity.toFixed(2)}) for item ${itemName} exceeds available stock (${stock.toFixed(2)}).`);
-            return;
-        }
-
         const priceType = rate === retailPrice ? 'Retail' : 'Wholesale';
         const grossAmount = rate * totalQuantity;
         const taxAmount = grossAmount * (taxPercentage / 100);
@@ -857,35 +843,7 @@
 
         const netTotalAmount = parseFloat(document.getElementById('net_total_amount').value) || 0;
         const totalPayment = parseFloat(document.getElementById('total_payment_amount').value) || 0;
-        const rows = document.querySelectorAll('.item-row');
         let isValid = true;
-
-        // Group items by item_id to check cumulative stock
-        const itemQuantities = {};
-        const itemDetails = {};
-
-        rows.forEach(row => {
-            const itemId = row.querySelector('input[name^=" Judgement-items["][name$="[item_id]"]').value;
-            const itemName = row.querySelector('input[name^="items["][name$="[item_name]"]').value;
-            const totalQuantity = parseFloat(row.querySelector('input[name^="items["][name$="[total_quantity]"]').value) || 0;
-            const stock = parseFloat(row.querySelector('input[name^="items["][name$="[stock]"]').value) || 0;
-
-            if (!itemQuantities[itemId]) {
-                itemQuantities[itemId] = 0;
-                itemDetails[itemId] = { name: itemName, stock: stock };
-            }
-            itemQuantities[itemId] += totalQuantity;
-        });
-
-        // Validate stock for each unique item
-        for (const itemId in itemQuantities) {
-            const totalQuantity = itemQuantities[itemId];
-            const { name, stock } = itemDetails[itemId];
-            if (totalQuantity > stock) {
-                showErrorMessage(`Total quantity (${totalQuantity.toFixed(2)}) for item ${name} exceeds available stock (${stock.toFixed(2)}).`);
-                isValid = false;
-            }
-        }
 
         if (Math.abs(netTotalAmount - totalPayment) > 0.01) {
             showErrorMessage('Total payment amount must equal the net total amount.');
@@ -894,8 +852,6 @@
 
         return isValid;
     }
-
-
 
     // Clear default values on focus for amount fields
     $(document).ready(function() {
@@ -1099,9 +1055,9 @@
             <td class="py-2 px-4 border-b">
                 <input type="hidden" name="items[${rowCount}][tax_percentage]" value="${parseFloat(item.tax_percentage || 0).toFixed(2)}">${parseFloat(item.tax_percentage || 0).toFixed(2)}
             </td>
-                <td class="py-2 px-4 border-b">
-                    <input type="hidden" name="items[${rowCount}][stock]" value="${parseFloat(item.stock || 0).toFixed(2)}">${parseFloat(item.stock || 0).toFixed(2)}
-                </td>
+            <td class="py-2 px-4 border-b">
+                <input type="hidden" name="items[${rowCount}][stock]" value="${parseFloat(item.stock || 0).toFixed(2)}">${parseFloat(item.stock || 0).toFixed(2)}
+            </td>
             <td class="py-2 px-4 border-b">
                 <input type="hidden" name="items[${rowCount}][total_amount]" value="${parseFloat(item.total_amount).toFixed(2)}">${parseFloat(item.total_amount).toFixed(2)}
                 <input type="hidden" name="items[${rowCount}][gross_amount]" value="${parseFloat(item.gross_amount).toFixed(2)}">

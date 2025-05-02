@@ -75,10 +75,27 @@
                 </a>
 
                 <!-- Reports -->
-                <a class="nav-link {{ request()->routeIs('reports.index') ? 'active' : '' }}" href="{{ route('reports.index') }}">
+
+                <a class="nav-link collapsed {{ request()->routeIs('reports.index', 'customer_report.index','van_report.index','employee_report.index','stock_report.index') ? 'active' : '' }}"
+                   href="#"
+                   data-bs-toggle="collapse"
+                   data-bs-target="#reportMenu"
+                   aria-expanded="{{ request()->routeIs('reports.index', 'customer_report.index','van_report.index','employee_report.index','stock_report.index') ? 'true' : 'false' }}"
+                   aria-controls="reportMenu">
                     <div class="sb-nav-link-icon"><i class="fas fa-chart-line"></i></div>
-                    Reports
+                    Report Management
+                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                 </a>
+                <div class="collapse {{ request()->routeIs('reports.index', 'customer_report.index','van_report.index','employee_report.index','stock_report.index') ? 'show' : '' }}" id="reportMenu">
+                    <nav class="sb-sidenav-menu-nested nav">
+                        <a class="nav-link {{ request()->routeIs('reports.index') ? 'active' : '' }}" href="{{ route('reports.index') }}">Sale Report</a>
+                        <a class="nav-link {{ request()->routeIs('customer_report.index') ? 'active' : '' }}" href="{{ route('customer_report.index') }}">Customer Report</a>
+                        <a class="nav-link {{ request()->routeIs('van_report.index') ? 'active' : '' }}" href="{{ route('van_report.index') }}">Van Report</a>
+                        <a class="nav-link {{ request()->routeIs('employee_report.index') ? 'active' : '' }}" href="{{ route('employee_report.index') }}">Employee Report</a>
+                        <a class="nav-link {{ request()->routeIs('stock_report.index') ? 'active' : '' }}" href="{{ route('stock_report.index') }}">Stock Report</a>
+                    </nav>
+                </div>
+
             </div>
         </div>
 

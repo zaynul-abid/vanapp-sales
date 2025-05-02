@@ -34,4 +34,9 @@ class Item extends Model
     {
         return $this->belongsTo(Tax::class);
     }
+
+    public function sales()
+    {
+        return $this->hasMany(Sale::class, 'item_id');
+    }
 }

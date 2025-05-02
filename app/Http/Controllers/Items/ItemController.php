@@ -110,11 +110,10 @@ class ItemController extends Controller
             'purchase_price', 'wholesale_price', 'retail_price', 'status'
         ]);
 
-        // Only update current_stock if opening_stock has changed
+        // Update opening_stock and set current_stock to the new opening_stock value
         if ($request->input('opening_stock') != $item->opening_stock) {
-            $difference = $request->input('opening_stock') - $item->opening_stock;
-            $data['current_stock'] = $item->current_stock + $difference;
             $data['opening_stock'] = $request->input('opening_stock');
+            $data['current_stock'] = $request->input('opening_stock'); // Set current_stock to new opening_stock
         } else {
             $data['opening_stock'] = $item->opening_stock;
         }
@@ -143,10 +142,8 @@ class ItemController extends Controller
             'type' => 'primary',
         ];
 
-        // Only update stock in item_unit_details if it was changed
-        if (isset($data['current_stock'])) {
-            $itemUnitDetails['stock'] = $data['current_stock'];
-        }
+        // Always update stock in item_unit_details with current_stock
+        $itemUnitDetails['stock'] = $data['current_stock'] ?? $item->current_stock;
 
         $itemUnitDetail = ItemUnitDetail::updateOrCreate(
             [
