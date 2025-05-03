@@ -8,12 +8,13 @@ use App\Models\Item;
 use App\Models\ItemUnitDetail;
 use App\Models\Unit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class UnitController extends Controller
 {
     public function index()
     {
-        $units = Unit::latest()->get();
+        $units = Unit::latest()->paginate(10);
         return view('dashboard.pages.components.units.index', compact('units'));
     }
 
@@ -60,8 +61,23 @@ class UnitController extends Controller
 
     public function destroy(Unit $unit)
     {
-        $unit->delete();
-        return redirect()->route('units.index')->with('success', 'Unit deleted successfully.');
+        try {
+            // Check if unit is active
+            if ($unit->status) {
+                return back()->with('error', 'Cannot delete: Unit is currently active.');
+            }
+
+            // Check if unit is referenced in items
+            if (Item::where('default_unit_id', $unit->id)->exists()) {
+                return back()->with('error', 'Cannot delete: Unit is assigned to items.');
+            }
+
+            $unit->delete();
+            return back()->with('success', 'Unit deleted successfully.');
+
+        } catch (\Exception $e) {
+            return back()->with('error', 'Deletion failed: ' . $e->getMessage());
+        }
     }
     public function showUnit($id)
     {

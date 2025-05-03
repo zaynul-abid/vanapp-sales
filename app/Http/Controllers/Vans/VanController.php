@@ -76,19 +76,25 @@ class VanController extends Controller
 
     public function destroy(Van $van)
     {
-        $van->delete();
+        // Check if status is 0 and employee_id is null
+        if ($van->status == 0 && $van->employee_id === null) {
+            $van->delete();
+            return redirect()->route('vans.index')
+                ->with('success', 'Van deleted successfully');
+        }
 
+        // If conditions are not met, return with an error message
         return redirect()->route('vans.index')
-            ->with('success', 'Van deleted successfully');
+            ->with('error', 'Van cannot be deleted because it is either assigned to an employee or has an active status.');
     }
 
 
 
-    public  function showSelection ()
+    public function showSelection()
     {
-        $vans = Van::with('employee')->get();
+        $vans = Van::with('employee')->paginate(10); // 10 items per page
         $employees = Employee::doesntHave('van')->get();
-      return view('dashboard.pages.components.vans.van-selection',compact('vans','employees'));
+        return view('dashboard.pages.components.vans.van-selection', compact('vans', 'employees'));
     }
 
     public function assign(Request $request)

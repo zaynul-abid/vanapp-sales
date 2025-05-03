@@ -12,9 +12,16 @@ use Illuminate\Support\Facades\Hash;
 
 class EmployeeController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $employees = Employee::with('department')->paginate(10);
+        $search = $request->query('search');
+        $employees = Employee::with('department')
+            ->when($search, function ($query, $search) {
+                return $query->where('name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
+            })
+            ->paginate(10);
+
         return view('dashboard.pages.components.employee.index', compact('employees'));
     }
     public function create()
@@ -109,6 +116,13 @@ class EmployeeController extends Controller
     public function destroy($id)
     {
         $employee = Employee::findOrFail($id);
+
+        // Check if employee is active
+        if ($employee->status == 1) { // Assuming 1 means active
+            return redirect()->route('employees.index')
+                ->with('error', 'Cannot delete active employee. Deactivate first.');
+        }
+
         $user = User::where('email', $employee->email)->first();
 
         $employee->delete();
@@ -116,6 +130,7 @@ class EmployeeController extends Controller
             $user->delete();
         }
 
-        return redirect()->route('employees.index')->with('success', 'Employee deleted successfully.');
+        return redirect()->route('employees.index')
+            ->with('success', 'Employee deleted successfully.');
     }
 }

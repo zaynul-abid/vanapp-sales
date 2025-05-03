@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Item;
 use App\Models\ItemUnitDetail;
+use App\Models\StockAddition;
 use App\Models\Tax;
 use App\Models\Unit;
 use Illuminate\Http\Request;
@@ -110,13 +111,24 @@ class ItemController extends Controller
             'purchase_price', 'wholesale_price', 'retail_price', 'status'
         ]);
 
-        // Update opening_stock and set current_stock to the new opening_stock value
-        if ($request->input('opening_stock') != $item->opening_stock) {
-            $data['opening_stock'] = $request->input('opening_stock');
-            $data['current_stock'] = $request->input('opening_stock'); // Set current_stock to new opening_stock
+        // Only add if positive stock is being added
+        $additionalStock = $request->input('opening_stock');
+        if ($additionalStock > 0) {
+            // Log the stock addition
+            StockAddition::create([
+                'item_id' => $item->id,
+                'quantity_added' => $additionalStock,
+                'note' => 'Stock added via item update',
+            ]);
+
+            $data['current_stock'] = $item->current_stock + $additionalStock;
+            $data['restocked_stock'] = $item->restocked_stock + $additionalStock;
         } else {
-            $data['opening_stock'] = $item->opening_stock;
+            $data['current_stock'] = $item->current_stock;
         }
+
+        // Keep the original opening stock unchanged
+        $data['opening_stock'] = $item->opening_stock;
 
         if ($request->hasFile('image')) {
             if ($item->image) {
@@ -127,7 +139,11 @@ class ItemController extends Controller
 
         $item->update($data);
 
-        // Update or create the ItemUnitDetail record
+        // Update all matching item unit details' stock
+        ItemUnitDetail::where('default_item_id', $item->id)->update([
+            'stock' => $data['current_stock'],
+        ]);
+
         $unit = Unit::find($request->default_unit_id);
         $tax = Tax::find($request->tax_id);
 
@@ -140,16 +156,11 @@ class ItemController extends Controller
             'wholesale_price' => $request->input('wholesale_price'),
             'retail_price' => $request->input('retail_price'),
             'type' => 'primary',
+            'stock' => $data['current_stock'],
         ];
 
-        // Always update stock in item_unit_details with current_stock
-        $itemUnitDetails['stock'] = $data['current_stock'] ?? $item->current_stock;
-
-        $itemUnitDetail = ItemUnitDetail::updateOrCreate(
-            [
-                'default_item_id' => $item->id,
-                'type' => 'primary'
-            ],
+        ItemUnitDetail::updateOrCreate(
+            ['default_item_id' => $item->id, 'type' => 'primary'],
             $itemUnitDetails
         );
 

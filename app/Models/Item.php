@@ -39,4 +39,8 @@ class Item extends Model
     {
         return $this->hasMany(Sale::class, 'item_id');
     }
+    public function stockAdditions()
+    {
+        return $this->hasMany(StockAddition::class);
+    }
 }

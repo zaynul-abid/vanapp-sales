@@ -10,13 +10,13 @@
 @endsection
 
 @section('content')
-    <div class="container">
+    <div class="container mt-4" style="max-width: 600px;">
         <div class="card shadow-sm">
             <div class="card-header bg-white">
                 <h1 class="card-title mb-0">{{ isset($van) ? 'Edit' : 'Create' }} Van</h1>
             </div>
             <div class="card-body">
-                <form action="{{ isset($van) ? route('vans.update', $van->id) : route('vans.store') }}" method="POST">
+                <form action="{{ isset($van) ? route('vans.update', $van->id) : route('vans.store') }}" method="POST" id="vanForm">
                     @csrf
                     @if(isset($van))
                         @method('PUT')
@@ -51,7 +51,7 @@
                     <div class="mb-3 form-check form-switch">
                         <input type="hidden" name="status" value="0">
                         <input type="checkbox" class="form-check-input" id="status" name="status" value="1"
-                            {{ old('status', isset($van) ? $van->status : false) ? 'checked' : '' }} />
+                            {{ old('status', isset($van) ? $van->status : true) ? 'checked' : '' }} />
                         <label class="form-check-label" for="status">Active</label>
                     </div>
 
@@ -60,7 +60,7 @@
                         <a href="{{ route('vans.index') }}" class="btn btn-secondary">
                             <i class="fas fa-arrow-left me-1"></i> Back
                         </a>
-                        <button type="submit" class="btn btn-primary">
+                        <button type="submit" class="btn btn-primary" id="submitButton">
                             <i class="fas fa-save me-1"></i>
                             {{ isset($van) ? 'Update' : 'Create' }}
                         </button>
@@ -69,4 +69,46 @@
             </div>
         </div>
     </div>
+
+    @section('scripts')
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const form = document.getElementById('vanForm');
+                const inputs = Array.from(form.querySelectorAll('input:not([type="hidden"])')); // Exclude hidden inputs
+                const submitButton = document.getElementById('submitButton');
+
+                // Prevent form submission on Enter key for all inputs
+                form.addEventListener('keypress', function(event) {
+                    if (event.key === 'Enter') {
+                        event.preventDefault(); // Prevent default form submission
+                        const activeElement = document.activeElement;
+                        const currentIndex = inputs.indexOf(activeElement);
+                        if (currentIndex >= 0 && currentIndex < inputs.length - 1) {
+                            inputs[currentIndex + 1].focus(); // Move to next input
+                        }
+                    }
+                });
+
+                // Handle Escape key for navigation
+                form.addEventListener('keydown', function(event) {
+                    if (event.key === 'Escape') {
+                        event.preventDefault();
+                        const activeElement = document.activeElement;
+                        const currentIndex = inputs.indexOf(activeElement);
+                        if (currentIndex > 0) {
+                            inputs[currentIndex - 1].focus(); // Move to previous input
+                        }
+                    }
+                });
+
+                // Ensure form only submits when submit button is explicitly clicked
+                form.addEventListener('submit', function(event) {
+                    if (!event.submitter || event.submitter.id !== 'submitButton') {
+                        event.preventDefault(); // Block submission unless submit button is clicked
+                    }
+                });
+            });
+        </script>
+    @endsection
+
 @endsection

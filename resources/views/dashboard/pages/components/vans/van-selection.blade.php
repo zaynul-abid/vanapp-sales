@@ -1,4 +1,4 @@
-```blade
+
 @extends('dashboard.layouts.app')
 
 @section('title', 'Van Assignment')
@@ -393,14 +393,21 @@
                             <i class="fas fa-van-shuttle"></i> Van Assignment Management
                         </h4>
                     </div>
-
+                    <!-- Success Message -->
                     @if(session('success'))
-                        <div class="success-message">
-                            <i class="fas fa-check-circle"></i>
+                        <div class="alert alert-success alert-dismissible fade show mb-4 mt-4"  role="alert">
+                            <i class="bi bi-check-circle-fill me-2"></i>
                             {{ session('success') }}
-                            <button type="button" data-bs-dismiss="alert" aria-label="Close">
-                                <i class="fas fa-times"></i>
-                            </button>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    @endif
+
+                    <!-- Error Message -->
+                    @if(session('error'))
+                        <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                            <i class="bi bi-exclamation-circle-fill me-2"></i>
+                            {{ session('error') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
                     @endif
 
@@ -418,10 +425,10 @@
                                         <table class="table">
                                             <thead>
                                             <tr>
-                                                <th>Van Details</th>
-                                                <th>Status</th>
-                                                <th class="center">Assigned To</th>
-                                                <th class="center">Actions</th>
+                                                <th>VAN DETAILS</th>
+                                                <th>STATUS</th>
+                                                <th class="center">ASSIGNED TO</th>
+                                                <th class="center">ACTIONS</th>
                                             </tr>
                                             </thead>
                                             <tbody>
@@ -513,6 +520,10 @@
                 </div>
             </div>
         </div>
+        <!-- Pagination -->
+        <div class="d-flex justify-content-center mt-4">
+            {{ $vans->links('pagination::bootstrap-5') }}
+        </div>
     </div>
 @endsection
 
@@ -537,4 +548,4 @@
         });
     </script>
 @endsection
-```
+

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Items;
 
 use App\Http\Controllers\Controller;
 use App\Models\AlternateUnit;
+use App\Models\Item;
 use App\Models\Unit;
 use Illuminate\Http\Request;
 
@@ -11,7 +12,7 @@ class AlternativeUnitController extends Controller
 {
     public function index()
     {
-        $alternativeUnits = AlternateUnit::latest()->get();
+        $alternativeUnits = AlternateUnit::latest()->paginate(10);
         return view('dashboard.pages.components.units.alternative-unit-index', compact('alternativeUnits'));
     }
 
@@ -59,7 +60,28 @@ class AlternativeUnitController extends Controller
 
     public function destroy(AlternateUnit $alternative_unit)
     {
-        $alternative_unit->delete();
-        return redirect()->route('alternative-units.index')->with('success', 'Unit deleted successfully.');
+        try {
+            // Check if unit is active
+            if ($alternative_unit->status === true) {
+                return redirect()->route('alternative-units.index')
+                    ->with('error', 'Cannot delete: Alternative unit is currently active.');
+            }
+
+            // Check if unit is referenced in items table
+            if (Item::where('default_alternate_unit_id', $alternative_unit->id)->exists()) {
+                return redirect()->route('alternative-units.index')
+                    ->with('error', 'Cannot delete: Alternative unit is being used by one or more items.');
+            }
+
+            // Proceed with deletion if inactive and not referenced
+            $alternative_unit->delete();
+
+            return redirect()->route('alternative-units.index')
+                ->with('success', 'Alternative unit deleted successfully.');
+
+        } catch (\Exception $e) {
+            return redirect()->route('alternative-units.index')
+                ->with('error', 'Failed to delete alternative unit: ' . $e->getMessage());
+        }
     }
 }

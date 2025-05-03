@@ -23,7 +23,6 @@
                 <th>Purchase Price</th>
                 <th>Wholesale Price</th>
                 <th>Retail Price</th>
-                <th>Opening Stock</th>
                 <th>Current Stock</th>
                 <th>Image</th>
                 <th>Status</th>
@@ -40,7 +39,6 @@
                     <td>{{ $item->purchase_price }}</td>
                     <td>{{ $item->wholesale_price }}</td>
                     <td>{{ $item->retail_price }}</td>
-                    <td>{{ $item->opening_stock }}</td>
                     <td>{{ $item->current_stock }}</td>
                     <td>
                         @if($item->image)

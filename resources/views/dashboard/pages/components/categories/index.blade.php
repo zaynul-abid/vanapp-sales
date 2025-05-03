@@ -1,5 +1,6 @@
 @extends('dashboard.layouts.app')
 @section('title','Category-section')
+
 @section('navbar')
     @if(auth()->user()->isSuperAdmin())
         @include('dashboard.partials.sidebar.superadmin-sidebar')
@@ -9,31 +10,75 @@
 @endsection
 
 @section('content')
-    <div class="container">
-        <a href="{{ route('categories.create') }}" class="btn btn-success mb-3">+ Add Category</a>
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4>Categories</h4>
+            <a href="{{ route('categories.create') }}" class="btn btn-dark">
+                <i class="ti ti-plus me-1"></i> Add Category
+            </a>
+        </div>
 
         @if(session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
+            <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         @endif
 
-        <table class="table table-bordered">
-            <tr>
-                <th>ID</th><th>Name</th><th>Status</th><th>Actions</th>
-            </tr>
-            @foreach($categories as $category)
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                <i class="bi bi-exclamation-circle-fill me-2"></i>
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        <div class="card-body">
+            <table id="datatablesSimple" class="table">
+                <thead class="table-light">
                 <tr>
-                    <td>{{ $category->id }}</td>
-                    <td>{{ $category->name }}</td>
-                    <td>{{ $category->status ? 'Active' : 'Inactive' }}</td>
-                    <td>
-                        <a href="{{ route('categories.edit', $category) }}" class="btn btn-sm btn-primary">Edit</a>
-                        <form action="{{ route('categories.destroy', $category) }}" method="POST" style="display:inline-block;">
-                            @csrf @method('DELETE')
-                            <button class="btn btn-sm btn-danger" onclick="return confirm('Delete this?')">Delete</button>
-                        </form>
-                    </td>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Actions</th>
                 </tr>
-            @endforeach
-        </table>
+                </thead>
+                <tbody>
+                @forelse($categories as $key => $category)
+                    <tr>
+                        <td>{{ ($categories->currentPage() - 1) * $categories->perPage() + $loop->iteration }}</td>
+                        <td>{{ $category->name }}</td>
+                        <td>
+                            <span class="badge bg-{{ $category->status ? 'success' : 'danger' }}">
+                                {{ $category->status ? 'Active' : 'Inactive' }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ route('categories.edit', $category) }}" class="btn btn-sm btn-warning">
+                                <i class="ti ti-edit"></i> Edit
+                            </a>
+                            <form action="{{ route('categories.destroy', $category) }}" method="POST" class="d-inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this?')">
+                                    <i class="ti ti-trash"></i> Delete
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="4" class="text-center text-muted">No categories found.</td>
+                    </tr>
+                @endforelse
+                </tbody>
+            </table>
+
+            <!-- Pagination -->
+            <div class="d-flex justify-content-center mt-3">
+                {{ $categories->appends(request()->query())->links('pagination::bootstrap-5') }}
+            </div>
+        </div>
     </div>
 @endsection

@@ -99,7 +99,7 @@
 
                 <div class="mb-2">
                     <label for="opening_stock" class="form-label small fw-medium">Opening Stock</label>
-                    <input type="number" name="opening_stock" id="opening_stock" class="form-control form-control-sm" value="{{ old('opening_stock', $item->opening_stock ?? '') }}" required>
+                    <input type="number" name="opening_stock" id="opening_stock" class="form-control form-control-sm" required>
                     @error('opening_stock')
                     <div class="text-danger small mt-1">{{ $message }}</div>
                     @enderror

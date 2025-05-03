@@ -1,4 +1,3 @@
-
 @extends('dashboard.layouts.app')
 @section('title', isset($category) ? 'Edit Category' : 'Create Category')
 
@@ -9,34 +8,113 @@
         @include('dashboard.partials.sidebar.admin-sidebar')
     @endif
 @endsection
+
 @section('content')
-    <div class="container">
-        <h2>{{ isset($category) ? 'Edit' : 'Create' }} Category</h2>
-        <form method="POST" action="{{ isset($category) ? route('categories.update', $category) : route('categories.store') }}">
-            @csrf
-            @if(isset($category))
-                @method('PUT')
-            @endif
+    <div class="container-fluid py-4">
+        <div class="row">
+            <div class="col-md-8 mx-auto">
+                <div class="card">
+                    <div class="card-header p-3">
+                        <h5 class="mb-0">{{ isset($category) ? 'Edit' : 'Create' }} Category</h5>
+                    </div>
+                    <div class="card-body p-3 pt-0">
+                        <form id="categoryForm" method="POST" action="{{ isset($category) ? route('categories.update', $category) : route('categories.store') }}">
+                            @csrf
+                            @if(isset($category))
+                                @method('PUT')
+                            @endif
 
-            <div class="form-group">
-                <label>Name</label>
-                <input type="text" name="name" class="form-control" value="{{ old('name', $category->name ?? '') }}" required>
+                            <div class="mb-3">
+                                <label class="form-label">Name</label>
+                                <input type="text" name="name" class="form-control form-control-sm"
+                                       value="{{ old('name', $category->name ?? '') }}" required
+                                       data-input-index="0">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Description</label>
+                                <textarea name="description" class="form-control form-control-sm" rows="3"
+                                          data-input-index="1">{{ old('description', $category->description ?? '') }}</textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Status</label>
+                                <select name="status" class="form-select form-select-sm" data-input-index="2">
+                                    <option value="1" {{ old('status', $category->status ?? '') == 1 ? 'selected' : '' }}>Active</option>
+                                    <option value="0" {{ old('status', $category->status ?? '') == 0 ? 'selected' : '' }}>Inactive</option>
+                                </select>
+                            </div>
+
+                            <div class="d-flex justify-content-end mt-4">
+                                <button type="submit" class="btn btn-sm btn-primary" id="submitButton">
+                                    <i class="fas fa-save me-1"></i> Save
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
-
-            <div class="form-group">
-                <label>Description</label>
-                <textarea name="description" class="form-control">{{ old('description', $category->description ?? '') }}</textarea>
-            </div>
-
-            <div class="form-group">
-                <label>Status</label>
-                <select name="status" class="form-control">
-                    <option value="1" {{ old('status', $category->status ?? '') == 1 ? 'selected' : '' }}>Active</option>
-                    <option value="0" {{ old('status', $category->status ?? '') == 0 ? 'selected' : '' }}>Inactive</option>
-                </select>
-            </div>
-
-            <button type="submit" class="btn btn-success">Save</button>
-        </form>
+        </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('categoryForm');
+            // Get only input fields (name, description, status) - exclude submit button
+            const inputFields = Array.from(form.querySelectorAll(
+                'input[name="name"], textarea[name="description"], select[name="status"]'
+            ));
+
+            // Sort elements by their data-input-index
+            inputFields.sort((a, b) => {
+                return parseInt(a.getAttribute('data-input-index')) - parseInt(b.getAttribute('data-input-index'));
+            });
+
+            // Handle keyboard navigation for input fields
+            inputFields.forEach(input => {
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        moveToNextField(input);
+                    }
+                    else if (e.key === 'Escape') {
+                        e.preventDefault();
+                        moveToPrevField(input);
+                    }
+                });
+            });
+
+            function moveToNextField(currentField) {
+                const currentIndex = inputFields.indexOf(currentField);
+                const nextIndex = (currentIndex + 1) % inputFields.length; // Wrap around to first field
+                inputFields[nextIndex].focus();
+            }
+
+            function moveToPrevField(currentField) {
+                const currentIndex = inputFields.indexOf(currentField);
+                const prevIndex = (currentIndex - 1 + inputFields.length) % inputFields.length; // Wrap around to last field
+                inputFields[prevIndex].focus();
+            }
+        });
+    </script>
+@endpush
+
+@push('styles')
+    <style>
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .form-control-sm, .form-select-sm {
+            padding: 0.35rem 0.75rem;
+            font-size: 0.875rem;
+        }
+        @media (max-width: 768px) {
+            .col-md-8 {
+                width: 100%;
+            }
+        }
+    </style>
+@endpush

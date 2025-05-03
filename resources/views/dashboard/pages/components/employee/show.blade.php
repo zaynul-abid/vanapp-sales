@@ -46,12 +46,12 @@
                     <!-- Name -->
                     <div class="col-md-6">
                         <dt class="fw-bold">Name</dt>
-                        <dd>{{ $employee->user->name ?? 'N/A' }}</dd>
+                        <dd>{{ $employee->name ?? 'N/A' }}</dd>
                     </div>
                     <!-- Email -->
                     <div class="col-md-6">
                         <dt class="fw-bold">Email</dt>
-                        <dd>{{ $employee->user->email ?? 'N/A' }}</dd>
+                        <dd>{{ $employee->email ?? 'N/A' }}</dd>
                     </div>
                     <!-- Department -->
                     <div class="col-md-6">

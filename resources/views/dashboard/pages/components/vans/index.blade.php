@@ -30,13 +30,22 @@
             </div>
         @endif
 
+        <!-- Error Message -->
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                <i class="bi bi-exclamation-circle-fill me-2"></i>
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
         <div class="card border-0 shadow-sm">
             <div class="card-body p-0">
                 <div class="table-responsive">
                     <table class="table table-hover mb-0" id="vansTable">
                         <thead class="table-light">
                         <tr>
-                            <th class="ps-3">ID</th>
+                            <th class="ps-3">No.</th>
                             <th>Name</th>
                             <th class="d-none d-lg-table-cell">Register Number</th>
                             <th class="d-none d-md-table-cell">Status</th>
@@ -44,20 +53,20 @@
                         </tr>
                         </thead>
                         <tbody>
-                        @forelse($vans as $van)
+                        @forelse($vans as $index => $van)
                             <tr>
                                 <td class="ps-3">
                                     <div class="d-flex flex-column">
-                                        <span>{{ $van->id }}</span>
+                                        <span>{{ $index + 1 }}</span>
                                         <small class="text-muted d-lg-none">{{ $van->register_number }}</small>
                                     </div>
                                 </td>
                                 <td>{{ $van->name }}</td>
                                 <td class="d-none d-lg-table-cell">{{ $van->register_number }}</td>
                                 <td class="d-none d-md-table-cell">
-                                        <span class="badge {{ $van->status ? 'bg-success' : 'bg-secondary' }} text-white px-2 py-1">
-                                            {{ $van->status ? 'Active' : 'Inactive' }}
-                                        </span>
+                                    <span class="badge {{ $van->status ? 'bg-success' : 'bg-secondary' }} text-white px-2 py-1">
+                                        {{ $van->status ? 'Active' : 'Inactive' }}
+                                    </span>
                                 </td>
                                 <td>
                                     <div class="d-flex flex-wrap gap-1">
