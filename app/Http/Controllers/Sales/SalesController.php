@@ -245,7 +245,9 @@ class SalesController extends Controller
     }
 
     public function updateBill(Request $request, $id)
+
     {
+
         return DB::transaction(function () use ($request, $id) {
             // Find the existing SaleMaster record
             $saleMaster = SaleMaster::findOrFail($id);

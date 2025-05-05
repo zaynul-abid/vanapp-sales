@@ -28,6 +28,10 @@
             color: #666;
             font-size: 0.9em;
         }
+
+        #payment-error-popup {
+            transition: opacity 0.3s ease-in-out;
+        }
     </style>
 </head>
 
@@ -123,13 +127,11 @@
                 <div>
                     <label for="item_name_input" class="block text-sm font-medium text-gray-700 mb-1">Item Name</label>
                     <input type="text" id="item_name_input" class="min-w-0 flex-grow w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onkeydown="preventEnter(event)">
+                    <input type="hidden" id="item_id_input">
                 </div>
                 <div>
-                    <label for="item_id_input" class="block text-sm font-medium text-gray-700 mb-1">Item ID</label>
-                    <input type="text" id="item_id_input" class="min-w-0 flex-grow w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onkeydown="preventEnter(event)">
-                </div>
-                <div>
-                    <label for="rate_input" class="block text-sm font-medium text-gray-700 mb-1">Rate</label>
+                    <label for="rate_input" class="block text-sm font-medium text-gray-7
+00 mb-1">Rate</label>
                     <input type="number" id="rate_input" step="0.01" class="min-w-0 flex-grow w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onkeydown="preventEnter(event)">
                 </div>
                 <div>
@@ -137,15 +139,18 @@
                     <input type="text" id="unit_input" class="min-w-0 flex-grow w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
                 </div>
                 <div>
-                    <label for="unit_quantity_input" class="block text-sm font-medium text-gray-700 mb-1">Unit Quantity</label>
+                    <label for="unit_quantity_input" class="block text-sm font-medium text-gray-700 mb-1">Unit Qty</label>
                     <input type="number" id="unit_quantity_input" step="0.01" class="min-w-0 flex-grow w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
                 </div>
                 <div>
-                    <label for="custom_quantity_input" class="block text-sm font-medium text-gray-700 mb-1">Custom Quantity</label>
+                    <label for="custom_quantity_input" class="block text-sm font-medium text-gray-700 mb-1">Custom Qty</label>
                     <input type="number" id="custom_quantity_input" step="0.01" class="min-w-0 flex-grow w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="updateTotalQuantity()" onkeydown="handleItemEnter(event)">
                 </div>
+                <div class="flex items-end">
+                    <button type="button" onclick="addItemToTable()" class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Add</button>
+                </div>
                 <div>
-                    <label for="total_quantity_input" class="block text-sm font-medium text-gray-700 mb-1">Total Quantity</label>
+                    <label for="total_quantity_input" class="block text-sm font-medium text-gray-700 mb-1">Total Qty</label>
                     <input type="number" id="total_quantity_input" step="0.01" class="min-w-0 flex-grow w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
                 </div>
                 <div>
@@ -156,8 +161,9 @@
                     <label for="stock_input" class="block text-sm font-medium text-gray-700 mb-1">Stock</label>
                     <input type="number" id="stock_input" step="0.01" class="min-w-0 flex-grow w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
                 </div>
-                <div class="md:col-span-2 flex items-end">
-                    <button type="button" onclick="addItemToTable()" class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Add</button>
+                <div>
+                    <label for="total_amount_display" class="block text-sm font-medium text-gray-700 mb-1">Total Amount</label>
+                    <input type="number" id="total_amount_display" step="0.01" class="min-w-0 flex-grow w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
                 </div>
             </div>
         </div>
@@ -165,15 +171,13 @@
             <table id="item-table" class="min-w-full bg-white border border-gray-300">
                 <thead>
                 <tr class="bg-gray-100">
-                    <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Item ID</th>
+                    <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Sl No</th>
                     <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Item Name</th>
                     <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Rate</th>
-                    <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Unit</th>
-                    <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Unit Quantity</th>
-                    <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Custom Quantity</th>
-                    <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Total Quantity</th>
                     <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Tax %</th>
-                    <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Stock</th>
+                    <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Qty</th>
+                    <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Unit</th>
+                    <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Total Qty</th>
                     <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Total Amount</th>
                     <th class="py-2 px-4 border-b text-left text-sm font-medium text-gray-700">Actions</th>
                 </tr>
@@ -223,7 +227,7 @@
 
         <!-- Payment Details -->
         <h2 class="text-2xl font-semibold text-gray-700 mt-8 mb-6">Payment Details</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
             <div>
                 <label for="payment_option" class="block text-sm font-medium text-gray-700 mb-1">Payment Option</label>
                 <select id="payment_option" name="payment_option" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onchange="updatePaymentFields()">
@@ -234,28 +238,26 @@
                     <option value="Other">Other</option>
                 </select>
             </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
             <div>
                 <label for="cash_amount" class="block text-sm font-medium text-gray-700 mb-1">Cash</label>
-                <input type="number" id="cash_amount" name="cash_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="updateTotalPayment()" onkeydown="handlePaymentEnter(event, 'cash_amount')">
+                <input type="number" id="cash_amount" name="cash_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="updateTotalPayment()" onkeydown="handlePaymentEnter(event, 'cash_amount')" disabled>
             </div>
             <div>
                 <label for="upi_amount" class="block text-sm font-medium text-gray-700 mb-1">UPI</label>
-                <input type="number" id="upi_amount" name="upi_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="updateTotalPayment()" onkeydown="handlePaymentEnter(event, 'upi_amount')">
+                <input type="number" id="upi_amount" name="upi_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="updateTotalPayment()" onkeydown="handlePaymentEnter(event, 'upi_amount')" disabled>
             </div>
             <div>
                 <label for="card_amount" class="block text-sm font-medium text-gray-700 mb-1">Card</label>
-                <input type="number" id="card_amount" name="card_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="updateTotalPayment()" onkeydown="handlePaymentEnter(event, 'card_amount')">
+                <input type="number" id="card_amount" name="card_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="updateTotalPayment()" onkeydown="handlePaymentEnter(event, 'card_amount')" disabled>
+            </div>
+            <div>
+                <label for="total_payment_amount" class="block text-sm font-medium text-gray-700 mb-1">Total Payment</label>
+                <input type="number" id="total_payment_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
             </div>
             <div>
                 <label for="credit_amount" class="block text-sm font-medium text-gray-700 mb-1">Credit</label>
-                <input type="number" id="credit_amount" name="credit_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="updateTotalPayment()" onkeydown="handlePaymentEnter(event, 'credit_amount')">
+                <input type="number" id="credit_amount" name="credit_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" oninput="updateTotalPayment()" onkeydown="handlePaymentEnter(event, 'credit_amount')" disabled>
             </div>
-        </div>
-        <div class="mt-4">
-            <label for="total_payment_amount" class="block text-sm font-medium text-gray-700 mb-1">Total Payment Amount</label>
-            <input type="number" id="total_payment_amount" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" readonly>
         </div>
         <input type="hidden" id="sale_type" name="sale_type" value="Cash">
 
@@ -271,6 +273,7 @@
         </div>
     </form>
 
+    <!-- Negative Stock Modal -->
     <div id="negativeStockModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
             <h3 class="text-lg font-bold text-red-600 mb-4">Negative Stock Warning</h3>
@@ -280,6 +283,12 @@
                 <button id="confirmNegativeStock" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Continue</button>
             </div>
         </div>
+    </div>
+
+    <!-- Payment Error Popup -->
+    <div id="payment-error-popup" class="hidden fixed bottom-4 right-4 bg-red-500 text-white p-4 rounded-lg shadow-lg z-50 opacity-0">
+        <p>The total payment amount is larger than the net total amount. Please enter the exact amount.</p>
+        <button onclick="closePaymentErrorPopup()" class="mt-2 text-white underline">Close</button>
     </div>
 </div>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -313,6 +322,24 @@
     function clearErrorMessages() {
         const errorContainer = document.getElementById('client-error-messages');
         errorContainer.innerHTML = '';
+    }
+
+    // Payment error popup functions
+    function showPaymentErrorPopup() {
+        const popup = document.getElementById('payment-error-popup');
+        popup.classList.remove('hidden');
+        setTimeout(() => {
+            popup.style.opacity = '1';
+        }, 10);
+        setTimeout(closePaymentErrorPopup, 5000);
+    }
+
+    function closePaymentErrorPopup() {
+        const popup = document.getElementById('payment-error-popup');
+        popup.style.opacity = '0';
+        setTimeout(() => {
+            popup.classList.add('hidden');
+        }, 300);
     }
 
     // CUSTOMER SEARCH FUNCTIONALITY
@@ -547,6 +574,7 @@
             $('#rate_input').data('wholesale', item.data('wholesale'));
             $('#custom_quantity_input').val('');
             $('#total_quantity_input').val('');
+            $('#total_amount_display').val('');
             $('#item_suggestions').addClass('hidden');
             itemCurrentFocus = -1;
             $('#custom_quantity_input').focus();
@@ -566,12 +594,19 @@
         });
     });
 
-    // Update total quantity display
+    // Update total quantity and amount display
     function updateTotalQuantity() {
         const unitQuantity = parseFloat(document.getElementById('unit_quantity_input').value) || 0;
         const customQuantity = parseFloat(document.getElementById('custom_quantity_input').value) || 0;
+        const rate = parseFloat(document.getElementById('rate_input').value) || 0;
+        const taxPercentage = parseFloat(document.getElementById('tax_percentage_input').value) || 0;
         const totalQuantity = unitQuantity * customQuantity;
+        const grossAmount = rate * totalQuantity;
+        const taxAmount = grossAmount * (taxPercentage / 100);
+        const totalAmount = grossAmount + taxAmount;
+
         document.getElementById('total_quantity_input').value = totalQuantity.toFixed(2);
+        document.getElementById('total_amount_display').value = totalAmount.toFixed(2);
     }
 
     // Handle Enter key on custom_quantity_input
@@ -611,15 +646,16 @@
         const totalAmount = grossAmount + taxAmount;
 
         // Get the current row count to use as index
-        const rowCount = $('#item-rows tr').length;
+        const rowCount = $('#item-rows tr').length + 1;
 
         const row = `
             <tr class="item-row">
                 <td class="py-2 px-4 border-b">
-                    <input type="hidden" name="items[${rowCount}][item_id]" value="${itemId}">${itemId}
+                    ${rowCount}
+                    <input type="hidden" name="items[${rowCount-1}][item_id]" value="${itemId}">
                 </td>
                 <td class="py-2 px-4 border-b">
-                    <input type="hidden" name="items[${rowCount}][item_name]" value="${itemName}">${itemName}
+                    <input type="hidden" name="items[${rowCount-1}][item_name]" value="${itemName}">${itemName}
                 </td>
                 <td class="py-2 px-4 border-b relative">
                     <div class="rate-display">${rate.toFixed(2)}</div>
@@ -627,32 +663,32 @@
                         <div class="p-2 hover:bg-blue-50 cursor-pointer" data-price="${retailPrice}">Retail: ${retailPrice.toFixed(2)}</div>
                         <div class="p-2 hover:bg-blue-50 cursor-pointer" data-price="${wholesalePrice}">Wholesale: ${wholesalePrice.toFixed(2)}</div>
                     </div>
-                    <input type="hidden" name="items[${rowCount}][rate]" value="${rate.toFixed(2)}">
-                    <input type="hidden" name="items[${rowCount}][price_type]" value="${priceType}">
-                    <input type="hidden" name="items[${rowCount}][unit_price]" value="${rate.toFixed(2)}">
+                    <input type="hidden" name="items[${rowCount-1}][rate]" value="${rate.toFixed(2)}">
+                    <input type="hidden" name="items[${rowCount-1}][price_type]" value="${priceType}">
+                    <input type="hidden" name="items[${rowCount-1}][unit_price]" value="${rate.toFixed(2)}">
                 </td>
                 <td class="py-2 px-4 border-b">
-                    <input type="hidden" name="items[${rowCount}][unit]" value="${unit}">${unit}
+                    <input type="hidden" name="items[${rowCount-1}][tax_percentage]" value="${taxPercentage.toFixed(2)}">${taxPercentage.toFixed(2)}
                 </td>
                 <td class="py-2 px-4 border-b">
-                    <input type="hidden" name="items[${rowCount}][unit_quantity]" value="${unitQuantity.toFixed(2)}">${unitQuantity.toFixed(2)}
+                    <input type="hidden" name="items[${rowCount-1}][custom_quantity]" value="${customQuantity.toFixed(2)}">${customQuantity.toFixed(2)}
                 </td>
                 <td class="py-2 px-4 border-b">
-                    <input type="hidden" name="items[${rowCount}][custom_quantity]" value="${customQuantity.toFixed(2)}">${customQuantity.toFixed(2)}
+                    <input type="hidden" name="items[${rowCount-1}][unit]" value="${unit}">${unit}
+                </td>
+                <td class="py-2 px-4 border-b hidden">
+                    <input type="hidden" name="items[${rowCount-1}][unit_quantity]" value="${unitQuantity.toFixed(2)}">${unitQuantity.toFixed(2)}
+                </td>
+                <td class="py-2 px-4 border-b hidden">
+                    <input type="hidden" name="items[${rowCount-1}][stock]" value="${stock.toFixed(2)}">${stock.toFixed(2)}
                 </td>
                 <td class="py-2 px-4 border-b">
-                    <input type="hidden" name="items[${rowCount}][total_quantity]" value="${totalQuantity.toFixed(2)}">${totalQuantity.toFixed(2)}
+                    <input type="hidden" name="items[${rowCount-1}][total_quantity]" value="${totalQuantity.toFixed(2)}">${totalQuantity.toFixed(2)}
                 </td>
                 <td class="py-2 px-4 border-b">
-                    <input type="hidden" name="items[${rowCount}][tax_percentage]" value="${taxPercentage.toFixed(2)}">${taxPercentage.toFixed(2)}
-                </td>
-                <td class="py-2 px-4 border-b">
-                    <input type="hidden" name="items[${rowCount}][stock]" value="${stock.toFixed(2)}">${stock.toFixed(2)}
-                </td>
-                <td class="py-2 px-4 border-b">
-                    <input type="hidden" name="items[${rowCount}][total_amount]" value="${totalAmount.toFixed(2)}">${totalAmount.toFixed(2)}
-                    <input type="hidden" name="items[${rowCount}][gross_amount]" value="${grossAmount.toFixed(2)}">
-                    <input type="hidden" name="items[${rowCount}][tax_amount]" value="${taxAmount.toFixed(2)}">
+                    <input type="hidden" name="items[${rowCount-1}][total_amount]" value="${totalAmount.toFixed(2)}">${totalAmount.toFixed(2)}
+                    <input type="hidden" name="items[${rowCount-1}][gross_amount]" value="${grossAmount.toFixed(2)}">
+                    <input type="hidden" name="items[${rowCount-1}][tax_amount]" value="${taxAmount.toFixed(2)}">
                 </td>
                 <td class="py-2 px-4 border-b">
                     <button type="button" onclick="removeItemRow(this)" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Remove</button>
@@ -693,6 +729,7 @@
         document.getElementById('unit_input').value = '';
         document.getElementById('tax_percentage_input').value = '';
         document.getElementById('stock_input').value = '';
+        document.getElementById('total_amount_display').value = '';
 
         updateTotals();
     }
@@ -768,29 +805,43 @@
         const cardInput = document.getElementById('card_amount');
         const creditInput = document.getElementById('credit_amount');
 
+        // Disable all inputs by default
+        cashInput.disabled = true;
+        upiInput.disabled = true;
+        cardInput.disabled = true;
+        creditInput.disabled = true;
+
         document.getElementById('sale_type').value = paymentOption;
 
         if (paymentOption === 'Cash') {
+            cashInput.disabled = false;
             cashInput.value = netTotalAmount.toFixed(2);
             upiInput.value = '';
             cardInput.value = '';
             creditInput.value = '';
         } else if (paymentOption === 'UPI') {
+            upiInput.disabled = false;
             cashInput.value = '';
             upiInput.value = netTotalAmount.toFixed(2);
             cardInput.value = '';
             creditInput.value = '';
         } else if (paymentOption === 'Card') {
+            cardInput.disabled = false;
             cashInput.value = '';
             upiInput.value = '';
             cardInput.value = netTotalAmount.toFixed(2);
             creditInput.value = '';
         } else if (paymentOption === 'Credit') {
+            creditInput.disabled = false;
             cashInput.value = '';
             upiInput.value = '';
             cardInput.value = '';
             creditInput.value = netTotalAmount.toFixed(2);
         } else if (paymentOption === 'Other') {
+            cashInput.disabled = false;
+            upiInput.disabled = false;
+            cardInput.disabled = false;
+            creditInput.disabled = false;
             cashInput.value = '';
             upiInput.value = '';
             cardInput.value = '';
@@ -819,6 +870,11 @@
 
         const totalPayment = nonCreditTotal + (parseFloat(creditInput.value) || 0);
         document.getElementById('total_payment_amount').value = totalPayment.toFixed(2);
+
+        // Check if total payment exceeds net total amount
+        if (totalPayment > netTotalAmount + 0.01) {
+            showPaymentErrorPopup();
+        }
     }
 
     // Handle Enter key on payment inputs
@@ -856,9 +912,52 @@
         const totalPayment = parseFloat(document.getElementById('total_payment_amount').value) || 0;
         let isValid = true;
 
-        if (Math.abs(netTotalAmount - totalPayment) > 0.01) {
+        if (totalPayment > netTotalAmount + 0.01) {
+            showPaymentErrorPopup();
+            isValid = false;
+        } else if (Math.abs(netTotalAmount - totalPayment) > 0.01) {
             showErrorMessage('Total payment amount must equal the net total amount.');
             isValid = false;
+        }
+
+        // Check for negative stock in the items table
+        const rows = document.querySelectorAll('.item-row');
+        let negativeStockItems = [];
+
+        rows.forEach(row => {
+            const stock = parseFloat(row.querySelector('input[name^="items["][name$="[stock]"]').value) || 0;
+            const totalQuantity = parseFloat(row.querySelector('input[name^="items["][name$="[total_quantity]"]').value) || 0;
+            const itemName = row.querySelector('td:nth-child(2)').textContent.trim();
+
+            if (totalQuantity > stock) {
+                negativeStockItems.push({
+                    name: itemName,
+                    requested: totalQuantity,
+                    available: stock
+                });
+            }
+        });
+
+        if (negativeStockItems.length > 0) {
+            // Show the negative stock modal
+            const modal = document.getElementById('negativeStockModal');
+            const message = document.getElementById('negativeStockMessage');
+
+            let messageText = 'You are about to enter negative stock for the following items:<br><br>';
+            negativeStockItems.forEach(item => {
+                messageText += `<strong>${item.name}</strong>: Requested ${item.requested}, Available ${item.available}<br>`;
+            });
+            messageText += '<br>Do you want to continue?';
+
+            message.innerHTML = messageText;
+            modal.classList.remove('hidden');
+
+            // Store the form reference
+            formToSubmit = event.target;
+
+            // Prevent form submission
+            event.preventDefault();
+            return false;
         }
 
         return isValid;
@@ -890,7 +989,7 @@
             suggestions.empty();
             billCurrentFocus = -1;
 
-            if (query.length >= 2) {
+            if (query.length >= 2 && !$('#bill_search').prop('disabled')) {
                 $.ajax({
                     url: '{{ route("sales.search-bills") }}',
                     method: 'GET',
@@ -949,6 +1048,9 @@
             $('#current_bill_id').val(billId);
             $('#bill_suggestions').addClass('hidden');
 
+            // Disable the bill search input
+            $('#bill_search').prop('disabled', true);
+
             // Show clear button
             $('#clear_bill').removeClass('hidden');
 
@@ -960,6 +1062,7 @@
         $('#clear_bill').on('click', function() {
             $('#current_bill_id').val('');
             $('#bill_search').val('');
+            $('#bill_search').prop('disabled', false);
             $(this).addClass('hidden');
             clearForm();
         });
@@ -970,6 +1073,45 @@
                 $('#bill_suggestions').addClass('hidden');
             }
         });
+
+        // Handle keyboard navigation for bill suggestions
+        $('#bill_search').on('keydown', function(e) {
+            let suggestions = $('#bill_suggestions');
+            let items = suggestions.find('.bill-item');
+
+            if ($('#bill_search').prop('disabled')) {
+                e.preventDefault();
+                return;
+            }
+
+            if (e.keyCode == 40) { // Down arrow
+                e.preventDefault();
+                billCurrentFocus++;
+                if (billCurrentFocus >= items.length) billCurrentFocus = 0;
+                setActiveBill(items);
+            } else if (e.keyCode == 38) { // Up arrow
+                e.preventDefault();
+                billCurrentFocus--;
+                if (billCurrentFocus < 0) billCurrentFocus = items.length - 1;
+                setActiveBill(items);
+            } else if (e.keyCode == 13) { // Enter
+                e.preventDefault();
+                if (billCurrentFocus > -1 && items.length > 0) {
+                    items.eq(billCurrentFocus).trigger('click');
+                }
+            }
+        });
+
+        function setActiveBill(items) {
+            items.removeClass('bg-blue-100');
+            if (billCurrentFocus >= 0 && billCurrentFocus < items.length) {
+                items.eq(billCurrentFocus).addClass('bg-blue-100');
+                items.eq(billCurrentFocus)[0].scrollIntoView({
+                    block: 'nearest',
+                    behavior: 'smooth'
+                });
+            }
+        }
     });
 
     function loadBillDetails(billId) {
@@ -1006,8 +1148,8 @@
 
                 // Add items to table
                 if (response.items && response.items.length > 0) {
-                    response.items.forEach(function(item) {
-                        addItemFromBill(item);
+                    response.items.forEach(function(item, index) {
+                        addItemFromBill(item, index);
                     });
                 }
 
@@ -1034,45 +1176,46 @@
         });
     }
 
-    function addItemFromBill(item) {
-        const rowCount = $('#item-rows tr').length;
+    function addItemFromBill(item, index) {
+        const rowCount = index + 1;
 
         const row = `
         <tr class="item-row">
             <td class="py-2 px-4 border-b">
-                <input type="hidden" name="items[${rowCount}][item_id]" value="${item.item_id}">${item.item_id}
+                ${rowCount}
+                <input type="hidden" name="items[${index}][item_id]" value="${item.item_id}">
             </td>
             <td class="py-2 px-4 border-b">
-                <input type="hidden" name="items[${rowCount}][item_name]" value="${item.item_name}">${item.item_name}
+                <input type="hidden" name="items[${index}][item_name]" value="${item.item_name}">${item.item_name}
             </td>
             <td class="py-2 px-4 border-b relative">
                 <div class="rate-display">${parseFloat(item.rate).toFixed(2)}</div>
-                <input type="hidden" name="items[${rowCount}][rate]" value="${parseFloat(item.rate).toFixed(2)}">
-                <input type="hidden" name="items[${rowCount}][price_type]" value="${item.price_type || 'Retail'}">
-                <input type="hidden" name="items[${rowCount}][unit_price]" value="${parseFloat(item.unit_price || item.rate).toFixed(2)}">
+                <input type="hidden" name="items[${index}][rate]" value="${parseFloat(item.rate).toFixed(2)}">
+                <input type="hidden" name="items[${index}][price_type]" value="${item.price_type || 'Retail'}">
+                <input type="hidden" name="items[${index}][unit_price]" value="${parseFloat(item.unit_price || item.rate).toFixed(2)}">
             </td>
             <td class="py-2 px-4 border-b">
-                <input type="hidden" name="items[${rowCount}][unit]" value="${item.unit}">${item.unit}
+                <input type="hidden" name="items[${index}][tax_percentage]" value="${parseFloat(item.tax_percentage || 0).toFixed(2)}">${parseFloat(item.tax_percentage || 0).toFixed(2)}
             </td>
             <td class="py-2 px-4 border-b">
-                <input type="hidden" name="items[${rowCount}][unit_quantity]" value="${parseFloat(item.unit_quantity || 1).toFixed(2)}">${parseFloat(item.unit_quantity || 1).toFixed(2)}
+                <input type="hidden" name="items[${index}][custom_quantity]" value="${parseFloat(item.custom_quantity || item.total_quantity / (item.unit_quantity || 1)).toFixed(2)}">${parseFloat(item.custom_quantity || item.total_quantity / (item.unit_quantity || 1)).toFixed(2)}
             </td>
             <td class="py-2 px-4 border-b">
-                <input type="hidden" name="items[${rowCount}][custom_quantity]" value="${parseFloat(item.custom_quantity || item.total_quantity / (item.unit_quantity || 1)).toFixed(2)}">${parseFloat(item.custom_quantity || item.total_quantity / (item.unit_quantity || 1)).toFixed(2)}
+                <input type="hidden" name="items[${index}][unit]" value="${item.unit}">${item.unit}
+            </td>
+            <td class="py-2 px-4 border-b hidden">
+                <input type="hidden" name="items[${index}][unit_quantity]" value="${parseFloat(item.unit_quantity || 1).toFixed(2)}">${parseFloat(item.unit_quantity || 1).toFixed(2)}
+            </td>
+            <td class="py-2 px-4 border-b hidden">
+                <input type="hidden" name="items[${index}][stock]" value="${parseFloat(item.stock || 0).toFixed(2)}">${parseFloat(item.stock || 0).toFixed(2)}
             </td>
             <td class="py-2 px-4 border-b">
-                <input type="hidden" name="items[${rowCount}][total_quantity]" value="${parseFloat(item.total_quantity).toFixed(2)}">${parseFloat(item.total_quantity).toFixed(2)}
+                <input type="hidden" name="items[${index}][total_quantity]" value="${parseFloat(item.total_quantity).toFixed(2)}">${parseFloat(item.total_quantity).toFixed(2)}
             </td>
             <td class="py-2 px-4 border-b">
-                <input type="hidden" name="items[${rowCount}][tax_percentage]" value="${parseFloat(item.tax_percentage || 0).toFixed(2)}">${parseFloat(item.tax_percentage || 0).toFixed(2)}
-            </td>
-            <td class="py-2 px-4 border-b">
-                <input type="hidden" name="items[${rowCount}][stock]" value="${parseFloat(item.stock || 0).toFixed(2)}">${parseFloat(item.stock || 0).toFixed(2)}
-            </td>
-            <td class="py-2 px-4 border-b">
-                <input type="hidden" name="items[${rowCount}][total_amount]" value="${parseFloat(item.total_amount).toFixed(2)}">${parseFloat(item.total_amount).toFixed(2)}
-                <input type="hidden" name="items[${rowCount}][gross_amount]" value="${parseFloat(item.gross_amount).toFixed(2)}">
-                <input type="hidden" name="items[${rowCount}][tax_amount]" value="${parseFloat(item.tax_amount).toFixed(2)}">
+                <input type="hidden" name="items[${index}][total_amount]" value="${parseFloat(item.total_amount).toFixed(2)}">${parseFloat(item.total_amount).toFixed(2)}
+                <input type="hidden" name="items[${index}][gross_amount]" value="${parseFloat(item.gross_amount).toFixed(2)}">
+                <input type="hidden" name="items[${index}][tax_amount]" value="${parseFloat(item.tax_amount).toFixed(2)}">
             </td>
             <td class="py-2 px-4 border-b">
                 <button type="button" onclick="removeItemRow(this)" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Remove</button>
@@ -1110,62 +1253,6 @@
     let formSubmissionInProgress = false;
     let formToSubmit = null;
 
-    // Modify the validateForm function to handle negative stock
-    function validateForm() {
-        clearErrorMessages();
-
-        const netTotalAmount = parseFloat(document.getElementById('net_total_amount').value) || 0;
-        const totalPayment = parseFloat(document.getElementById('total_payment_amount').value) || 0;
-        let isValid = true;
-
-        if (Math.abs(netTotalAmount - totalPayment) > 0.01) {
-            showErrorMessage('Total payment amount must equal the net total amount.');
-            isValid = false;
-        }
-
-        // Check for negative stock in the items table
-        const rows = document.querySelectorAll('.item-row');
-        let negativeStockItems = [];
-
-        rows.forEach(row => {
-            const stock = parseFloat(row.querySelector('input[name^="items["][name$="[stock]"]').value) || 0;
-            const totalQuantity = parseFloat(row.querySelector('input[name^="items["][name$="[total_quantity]"]').value) || 0;
-            const itemName = row.querySelector('td:nth-child(2)').textContent.trim();
-
-            if (totalQuantity > stock) {
-                negativeStockItems.push({
-                    name: itemName,
-                    requested: totalQuantity,
-                    available: stock
-                });
-            }
-        });
-
-        if (negativeStockItems.length > 0) {
-            // Show the negative stock modal
-            const modal = document.getElementById('negativeStockModal');
-            const message = document.getElementById('negativeStockMessage');
-
-            let messageText = 'You are about to enter negative stock for the following items:<br><br>';
-            negativeStockItems.forEach(item => {
-                messageText += `<strong>${item.name}</strong>: Requested ${item.requested}, Available ${item.available}<br>`;
-            });
-            messageText += '<br>Do you want to continue?';
-
-            message.innerHTML = messageText;
-            modal.classList.remove('hidden');
-
-            // Store the form reference
-            formToSubmit = event.target;
-
-            // Prevent form submission
-            event.preventDefault();
-            return false;
-        }
-
-        return isValid;
-    }
-
     // Handle modal button clicks
     document.getElementById('cancelNegativeStock').addEventListener('click', function() {
         document.getElementById('negativeStockModal').classList.add('hidden');
@@ -1187,8 +1274,6 @@
         }
 
         formSubmissionInProgress = true;
-        // Show loading indicator if needed
-        // document.getElementById('submitButton').disabled = true;
     });
 </script>
 </body>
