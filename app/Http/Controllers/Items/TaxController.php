@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Items;
 
 use App\Http\Controllers\Controller;
+use App\Models\Item;
 use App\Models\Tax;
 use Illuminate\Http\Request;
 
@@ -10,7 +11,7 @@ class TaxController extends Controller
 {
     public function index()
     {
-        $taxes = Tax::latest()->get();
+        $taxes = Tax::latest()->paginate(10);
         return view('dashboard.pages.components.taxes.index', compact('taxes'));
     }
 
@@ -50,7 +51,22 @@ class TaxController extends Controller
 
     public function destroy(Tax $tax)
     {
-        $tax->delete();
-        return redirect()->route('taxes.index')->with('success', 'Tax deleted successfully!');
+        try {
+            // Check if tax is being used in any items
+            if (Item::where('tax_id', $tax->id)->exists()) {
+                return redirect()->route('taxes.index')
+                    ->with('error', 'Cannot delete: Tax is being used by one or more items.');
+            }
+
+            // Proceed with deletion if not referenced
+            $tax->delete();
+
+            return redirect()->route('taxes.index')
+                ->with('success', 'Tax deleted successfully!');
+
+        } catch (\Exception $e) {
+            return redirect()->route('taxes.index')
+                ->with('error', 'Failed to delete tax: ' . $e->getMessage());
+        }
     }
 }

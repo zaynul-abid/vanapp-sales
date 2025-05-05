@@ -67,11 +67,6 @@ class AlternativeUnitController extends Controller
                     ->with('error', 'Cannot delete: Alternative unit is currently active.');
             }
 
-            // Check if unit is referenced in items table
-            if (Item::where('default_alternate_unit_id', $alternative_unit->id)->exists()) {
-                return redirect()->route('alternative-units.index')
-                    ->with('error', 'Cannot delete: Alternative unit is being used by one or more items.');
-            }
 
             // Proceed with deletion if inactive and not referenced
             $alternative_unit->delete();

@@ -10,7 +10,7 @@ class CustomerController extends Controller
 {
     public function index()
     {
-        $customers = Customer::all();
+        $customers = Customer::paginate(10);
         return view('dashboard.pages.components.customers.index',compact('customers'));
     }
 
@@ -54,32 +54,30 @@ class CustomerController extends Controller
     }
     public function destroy(Customer $customer)
     {
-        $customer->delete();
-        return redirect()->route('customers.index')->with('success', 'Customer deleted successfully.');
-    }
+        try {
+            // Check if customer is active
+            if ($customer->is_active) {
+                return redirect()->route('customers.index')
+                    ->with('error', 'Cannot delete: Customer is currently active.');
+            }
 
-//    public function getCustomer(Request $request)
-//    {
-//        $name = $request->input('name');
-//
-//        $customers = Customer::where('name', 'LIKE', '%' . $name . '%')
-//            ->where('is_active', 1)
-//            ->limit(10)
-//            ->get();
-//
-//        $results = [];
-//
-//        foreach ($customers as $customer) {
-//            $results[] = [
-//                'id' => $customer->customer_id,
-//                'label' => $customer->name,
-//                'value' => $customer->name, // What gets inserted into the input box
-//                'address' => $customer->address,
-//            ];
-//        }
-//
-//        return response()->json($results);
-//    }
+            // Check if customer has any sales
+            if (\DB::table('sale_masters')->where('customer_id', $customer->id)->exists()) {
+                return redirect()->route('customers.index')
+                    ->with('error', 'Cannot delete: Customer has existing sales records.');
+            }
+
+            // Proceed with deletion if inactive and has no sales
+            $customer->delete();
+
+            return redirect()->route('customers.index')
+                ->with('success', 'Customer deleted successfully.');
+
+        } catch (\Exception $e) {
+            return redirect()->route('customers.index')
+                ->with('error', 'Failed to delete customer: ' . $e->getMessage());
+        }
+    }
 
     public function searchCustomers(Request $request)
     {

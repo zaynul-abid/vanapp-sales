@@ -44,28 +44,35 @@
 <div class="container">
     <h1 class="mt-4 mb-4">Sales Report</h1>
 
-
     <!-- Filter Form -->
     <div class="filter-container">
         <form method="GET" action="{{ route('reports.index') }}" class="row g-3 align-items-end">
-            <div class="col-md-4">
-                <label for="filter_type" class="form-label fw-bold">Filter By</label>
-                <select name="filter_type" id="filter_type" class="form-select" onchange="updateDatePicker()">
-                    <option value="">Select Filter</option>
-                    <option value="day" {{ $filterType == 'day' ? 'selected' : '' }}>Day</option>
-                    <option value="month" {{ $filterType == 'month' ? 'selected' : '' }}>Month</option>
-                    <option value="year" {{ $filterType == 'year' ? 'selected' : '' }}>Year</option>
-                </select>
+            <div class="col-md-3">
+                <label for="from_date" class="form-label fw-bold">From Date</label>
+                <input type="text" name="from_date" id="from_date" class="form-control"
+                       placeholder="Select start date" value="{{ $fromDate ?? '' }}">
             </div>
-            <div class="col-md-4">
-                <label for="filter_value" class="form-label fw-bold">Select Date</label>
-                <input type="text" name="filter_value" id="filter_value" class="form-control"
-                       placeholder="Select date" value="{{ $filterValue ?? '' }}">
+            <div class="col-md-3">
+                <label for="to_date" class="form-label fw-bold">To Date</label>
+                <input type="text" name="to_date" id="to_date" class="form-control"
+                       placeholder="Select end date" value="{{ $toDate ?? '' }}">
             </div>
-            <div class="col-md-4">
+            <div class="col-md-3">
+                <label for="search" class="form-label fw-bold">Search</label>
+                <input type="text" name="search" id="search" class="form-control"
+                       placeholder="Search by customer or bill no" value="{{ $search ?? '' }}">
+            </div>
+            <div class="col-md-3">
                 <button type="submit" class="btn btn-primary me-2">Apply Filter</button>
-                <a href="{{ route('reports.index') }}" class="btn btn-secondary">Clear Filter</a>
+                <a href="{{ route('reports.index') }}" class="btn btn-secondary">Clear</a>
             </div>
+        </form>
+        <!-- Export to PDF Button -->
+        <form method="GET" action="{{ route('sales-report.pdf') }}" class="mt-3">
+            <input type="hidden" name="from_date" value="{{ $fromDate ?? '' }}">
+            <input type="hidden" name="to_date" value="{{ $toDate ?? '' }}">
+            <input type="hidden" name="search" value="{{ $search ?? '' }}">
+            <button type="submit" class="btn btn-success">Export to PDF</button>
         </form>
     </div>
 
@@ -119,7 +126,7 @@
                 <tr>
                     <th>Bill No</th>
                     <th>Sale Date</th>
-                    <th>Customer </th>
+                    <th>Customer</th>
                     <th>Sale Type</th>
                     <th>Net Gross Amount</th>
                     <th>Net Tax Amount</th>
@@ -127,7 +134,7 @@
                     <th>Employee Name</th>
                     <th>Van Details</th>
                     <th>Net Total</th>
-                    <th>Details</th>
+                    <th>Actions</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -142,29 +149,19 @@
                         <td>{{ number_format($saleMaster->discount, 2) }}</td>
                         <td>{{ $saleMaster->user->name ?? 'N/A' }}</td>
                         <td>{{ $saleMaster->van->name ?? 'N/A' }}</td>
-                        <td>{{ $saleMaster->customer->name ?? 'N/A' }}</td>
                         <td>{{ number_format($saleMaster->net_total_amount, 2) }}</td>
                         <td>
-                            @if($saleMaster->sales->isEmpty())
-                                <span class="text-muted">No items</span>
-                            @else
-                                <ul class="list-unstyled">
-
-
-                                @foreach($saleMaster->sales as $sale)
-                                        <li>
-                                            Item Name: {{ $sale->item_name ?? 'N/A' }} |
-                                            Amount: {{ number_format($sale->total_amount ?? 0, 2) }}
-                                            <!-- Add more sale columns as needed -->
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            @endif
+                            <a href="{{ route('showSale.item', $saleMaster->id) }}" class="btn btn-sm btn-info" target="_blank">Show Details</a>
                         </td>
                     </tr>
                 @endforeach
                 </tbody>
             </table>
+
+            <!-- Pagination Links -->
+            <div class="d-flex justify-content-center">
+                {{ $saleMasters->appends(request()->query())->links('pagination::bootstrap-5') }}
+            </div>
         @endif
     </div>
 </div>
@@ -172,33 +169,16 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
 <script>
-    function updateDatePicker() {
-        const filterType = document.getElementById('filter_type').value;
-        const filterValueInput = document.getElementById('filter_value');
-        let dateFormat = "Y-m-d";
-        let enableTime = false;
-
-        if (filterType === 'day') {
-            dateFormat = "Y-m-d";
-        } else if (filterType === 'month') {
-            dateFormat = "Y-m";
-        } else if (filterType === 'year') {
-            dateFormat = "Y";
-        } else {
-            filterValueInput.value = '';
-            return;
-        }
-
-        flatpickr(filterValueInput, {
-            dateFormat: dateFormat,
-            enableTime: enableTime,
+    document.addEventListener('DOMContentLoaded', function() {
+        flatpickr("#from_date", {
+            dateFormat: "Y-m-d",
             maxDate: "today",
         });
-    }
 
-    // Initialize date picker on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        updateDatePicker();
+        flatpickr("#to_date", {
+            dateFormat: "Y-m-d",
+            maxDate: "today",
+        });
     });
 </script>
 </body>

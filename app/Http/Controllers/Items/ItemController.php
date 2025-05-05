@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Item;
 use App\Models\ItemUnitDetail;
+use App\Models\Sale;
 use App\Models\StockAddition;
 use App\Models\Tax;
 use App\Models\Unit;
@@ -17,7 +18,7 @@ class ItemController extends Controller
 {
     public function index()
     {
-        $items = Item::with(['category', 'unit', 'tax'])->latest()->get();
+        $items = Item::with(['category', 'unit', 'tax'])->latest()->paginate(10);
         return view('dashboard.pages.components.items.index', compact('items'));
     }
 
@@ -91,6 +92,7 @@ class ItemController extends Controller
         return view('dashboard.pages.components.items.forms', compact('item', 'categories', 'units', 'taxes'));
     }
 
+
     public function update(Request $request, Item $item)
     {
         $request->validate([
@@ -101,9 +103,10 @@ class ItemController extends Controller
             'purchase_price' => 'required|numeric',
             'wholesale_price' => 'required|numeric',
             'retail_price' => 'required|numeric',
-            'opening_stock' => 'required|numeric',
+            'stock' => 'nullable|numeric', // Changed from opening_stock, made optional
             'image' => 'nullable|image|max:2048',
             'status' => 'required|boolean',
+            'remove_image' => 'nullable|boolean', // Added for image removal
         ]);
 
         $data = $request->only([
@@ -111,25 +114,27 @@ class ItemController extends Controller
             'purchase_price', 'wholesale_price', 'retail_price', 'status'
         ]);
 
-        // Only add if positive stock is being added
-        $additionalStock = $request->input('opening_stock');
-        if ($additionalStock > 0) {
-            // Log the stock addition
-            StockAddition::create([
-                'item_id' => $item->id,
-                'quantity_added' => $additionalStock,
-                'note' => 'Stock added via item update',
-            ]);
-
+        // Handle stock adjustment
+        $additionalStock = $request->input('stock');
+        if ($request->filled('stock') && $additionalStock != 0) { // Process non-zero stock adjustments
+            // Log the stock addition (only for positive stock)
+            if ($additionalStock > 0) {
+                StockAddition::create([
+                    'item_id' => $item->id,
+                    'quantity_added' => $additionalStock,
+                    'note' => 'Stock added via item update',
+                ]);
+                $data['restocked_stock'] = $item->restocked_stock + $additionalStock;
+            }
             $data['current_stock'] = $item->current_stock + $additionalStock;
-            $data['restocked_stock'] = $item->restocked_stock + $additionalStock;
         } else {
-            $data['current_stock'] = $item->current_stock;
+            $data['current_stock'] = $item->current_stock; // No change if empty or zero
         }
 
         // Keep the original opening stock unchanged
         $data['opening_stock'] = $item->opening_stock;
 
+        // Handle image upload
         if ($request->hasFile('image')) {
             if ($item->image) {
                 Storage::disk('public')->delete($item->image);
@@ -137,6 +142,13 @@ class ItemController extends Controller
             $data['image'] = $request->file('image')->store('items', 'public');
         }
 
+        // Handle image removal
+        if ($request->remove_image && $item->image) {
+            Storage::disk('public')->delete($item->image);
+            $data['image'] = null;
+        }
+
+        // Update the item
         $item->update($data);
 
         // Update all matching item unit details' stock
@@ -144,6 +156,7 @@ class ItemController extends Controller
             'stock' => $data['current_stock'],
         ]);
 
+        // Prepare item unit details
         $unit = Unit::find($request->default_unit_id);
         $tax = Tax::find($request->tax_id);
 
@@ -159,6 +172,7 @@ class ItemController extends Controller
             'stock' => $data['current_stock'],
         ];
 
+        // Update or create item unit details
         ItemUnitDetail::updateOrCreate(
             ['default_item_id' => $item->id, 'type' => 'primary'],
             $itemUnitDetails
@@ -166,8 +180,21 @@ class ItemController extends Controller
 
         return redirect()->route('items.index')->with('success', 'Item updated successfully.');
     }
+
     public function destroy(Item $item)
     {
+        // Check if the item is active (status = 1)
+        if ($item->status == 1) {
+            return redirect()->route('items.index')->with('error', 'Cannot delete an active item. Please deactivate it first.');
+        }
+
+        // Check if the item has associated sales records
+        $hasSales = Sale::where('item_id', $item->id)->exists();
+        if ($hasSales) {
+            return redirect()->route('items.index')->with('error', 'Cannot delete this item because it has associated sales records.');
+        }
+
+        // Proceed with deletion if the item is inactive and has no sales records
         DB::transaction(function () use ($item) {
             ItemUnitDetail::where('default_item_id', $item->id)->delete();
 
@@ -180,6 +207,7 @@ class ItemController extends Controller
 
         return redirect()->route('items.index')->with('success', 'Item deleted successfully.');
     }
+
 
 
     public function searchItems(Request $request)

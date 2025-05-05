@@ -1,5 +1,6 @@
 @extends('dashboard.layouts.app')
-@section('title','customer-section')
+@section('title', 'Customers')
+
 @section('navbar')
     @if(auth()->user()->isSuperAdmin())
         @include('dashboard.partials.sidebar.superadmin-sidebar')
@@ -9,23 +10,35 @@
 @endsection
 
 @section('content')
-        <div class="container">
-            <h1>Customers</h1>
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4>Customers</h4>
+            <a href="{{ route('customers.create') }}" class="btn btn-dark">
+                <i class="ti ti-plus me-1"></i> Add Customer
+            </a>
+        </div>
 
-            @if(session('success'))
-                <div class="alert alert-success">
-                    {{ session('success') }}
-                </div>
-            @endif
-
-            <div class="mb-3">
-                <a href="{{ route('customers.create') }}" class="btn btn-success">Create New Customer</a>
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
+        @endif
 
-            <table class="table table-striped">
-                <thead>
+        @if(session('error'))
+            <div class="alert alert-danger alert-dismissible fade show mb-4" role="alert">
+                <i class="bi bi-exclamation-circle-fill me-2"></i>
+                {{ session('error') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        @endif
+
+        <div class="card-body">
+            <table id="datatablesSimple" class="table">
+                <thead class="table-light">
                 <tr>
-                    <th>ID</th>
+                    <th>#</th>
                     <th>Customer ID</th>
                     <th>Name</th>
                     <th>Email</th>
@@ -36,26 +49,44 @@
                 </tr>
                 </thead>
                 <tbody>
-                @foreach($customers as $customer)
+                @forelse($customers as $key => $customer)
                     <tr>
-                        <td>{{ $customer->id }}</td>
+                        <td>{{ ($customers->currentPage() - 1) * $customers->perPage() + $loop->iteration }}</td>
                         <td>{{ $customer->customer_id }}</td>
                         <td>{{ $customer->name }}</td>
                         <td>{{ $customer->email }}</td>
                         <td>{{ $customer->phone }}</td>
                         <td>{{ $customer->customer_type }}</td>
-                        <td>{{ $customer->is_active ? 'Active' : 'Inactive' }}</td>
                         <td>
-                            <a href="{{ route('customers.edit', $customer->id) }}" class="btn btn-primary btn-sm">Edit</a>
-                            <form action="{{ route('customers.destroy', $customer->id) }}" method="POST" style="display: inline-block;">
+                            <span class="badge bg-{{ $customer->is_active ? 'success' : 'danger' }}">
+                                {{ $customer->is_active ? 'Active' : 'Inactive' }}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ route('customers.edit', $customer) }}" class="btn btn-sm btn-warning">
+                                <i class="ti ti-edit"></i> Edit
+                            </a>
+                            <form action="{{ route('customers.destroy', $customer) }}" method="POST" class="d-inline">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure?')">Delete</button>
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Delete this customer?')">
+                                    <i class="ti ti-trash"></i> Delete
+                                </button>
                             </form>
                         </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">No customers found.</td>
+                    </tr>
+                @endforelse
                 </tbody>
             </table>
+
+            <!-- Pagination -->
+            <div class="d-flex justify-content-center mt-3">
+                {{ $customers->appends(request()->query())->links('pagination::bootstrap-5') }}
+            </div>
         </div>
+    </div>
 @endsection

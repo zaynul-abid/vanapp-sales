@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Report;
 use App\Http\Controllers\Controller;
 use App\Models\Sale;
 use App\Models\SaleMaster;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
@@ -12,36 +13,38 @@ class ReportController extends Controller
 {
     public function index(Request $request)
     {
-        // Initialize query for SaleMaster with sales relationship
-        $query = SaleMaster::with('sales')->whereNull('deleted_at');
+        $query = SaleMaster::with(['sales', 'customer', 'user', 'van'])->whereNull('deleted_at');
 
-        // Apply date filter if provided
-        $filterType = $request->input('filter_type'); // day, month, or year
-        $filterValue = $request->input('filter_value'); // e.g., 2025-04-29, 2025-04, or 2025
-
-        if ($filterType && $filterValue) {
-            if ($filterType === 'day') {
-                $query->whereDate('sale_date', $filterValue);
-            } elseif ($filterType === 'month') {
-                $query->whereMonth('sale_date', substr($filterValue, 5, 2))
-                    ->whereYear('sale_date', substr($filterValue, 0, 4));
-            } elseif ($filterType === 'year') {
-                $query->whereYear('sale_date', $filterValue);
-            }
+        $fromDate = $request->input('from_date');
+        $toDate = $request->input('to_date');
+        if ($fromDate && $toDate) {
+            $query->whereBetween('sale_date', [$fromDate, $toDate]);
         }
 
-        // Fetch filtered sale masters with their sales
-        $saleMasters = $query->get();
+        // Single search for both customer name and bill number
+        $search = $request->input('search');
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('bill_no', 'LIKE', "%{$search}%")
+                    ->orWhereHas('customer', function ($q) use ($search) {
+                        $q->where('name', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
 
-        // Calculate totals using the correct fields
-        $totalSales = $saleMasters->count();
+        $saleMasters = $query->paginate(10);
+
+        $totalSales = $saleMasters->total();
         $totalDiscounts = $saleMasters->sum('discount');
         $totalNetGross = $saleMasters->sum('net_gross_amount');
         $totalNetTax = $saleMasters->sum('net_tax_amount');
         $totalNet = $saleMasters->sum('net_total_amount');
 
-        // Group by financial year
-        $salesByYear = $saleMasters->groupBy('financial_year')->map(function ($group) {
+        $salesByYearQuery = SaleMaster::whereNull('deleted_at');
+        if ($fromDate && $toDate) {
+            $salesByYearQuery->whereBetween('sale_date', [$fromDate, $toDate]);
+        }
+        $salesByYear = $salesByYearQuery->get()->groupBy('financial_year')->map(function ($group) {
             return [
                 'count' => $group->count(),
                 'net_gross_amount' => $group->sum('net_gross_amount'),
@@ -58,10 +61,70 @@ class ReportController extends Controller
             'totalNetTax',
             'totalNet',
             'salesByYear',
-            'filterType',
-            'filterValue',
-            'totalDiscounts'
+            'totalDiscounts',
+            'fromDate',
+            'toDate',
+            'search' // Pass the single search term to the view
         ));
+    }
+    public function showSaleItemDetails($saleMasterId)
+    {
+        $saleMaster = SaleMaster::with(['sales', 'customer', 'user', 'van'])->findOrFail($saleMasterId);
+        return view('dashboard.pages.components.reports.sales-item', compact('saleMaster'));
+    }
+
+    public function salesReportPdf(Request $request)
+    {
+        $query = SaleMaster::with(['sales', 'customer', 'user', 'van'])->whereNull('deleted_at');
+
+        $fromDate = $request->input('from_date');
+        $toDate = $request->input('to_date');
+        if ($fromDate && $toDate) {
+            $query->whereBetween('sale_date', [$fromDate, $toDate]);
+        }
+
+        $search = $request->input('search'); // Updated to use single search field
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('bill_no', 'LIKE', "%{$search}%")
+                    ->orWhereHas('customer', function ($q) use ($search) {
+                        $q->where('name', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        $saleMasters = $query->get();
+
+        $totalSales = $saleMasters->count();
+        $totalDiscounts = $saleMasters->sum('discount');
+        $totalNetGross = $saleMasters->sum('net_gross_amount');
+        $totalNetTax = $saleMasters->sum('net_tax_amount');
+        $totalNet = $saleMasters->sum('net_total_amount');
+
+        $salesByYear = $saleMasters->groupBy('financial_year')->map(function ($group) {
+            return [
+                'count' => $group->count(),
+                'net_gross_amount' => $group->sum('net_gross_amount'),
+                'net_tax_amount' => $group->sum('net_tax_amount'),
+                'total_discount' => $group->sum('discount'),
+                'net_total_amount' => $group->sum('net_total_amount'),
+            ];
+        })->toArray();
+
+        // Load the view for PDF and set A4 size
+        $pdf = Pdf::loadView('dashboard.pages.components.reports.sale-pdf', compact(
+            'saleMasters',
+            'totalSales',
+            'totalNetGross',
+            'totalNetTax',
+            'totalNet',
+            'salesByYear',
+            'totalDiscounts',
+            'fromDate',
+            'toDate'
+        ))->setPaper('a4', 'portrait'); // Set A4 size and orientation
+
+        return $pdf->download('sales-report.pdf');
     }
 
 

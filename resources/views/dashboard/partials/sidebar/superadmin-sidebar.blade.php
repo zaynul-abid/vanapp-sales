@@ -45,15 +45,34 @@
                     <div class="sb-nav-link-icon"><i class="fas fa-tags"></i></div>
                     Categories
                 </a>
-
-                <!-- Units -->
-                <a class="nav-link {{ request()->routeIs('units.index') ? 'active' : '' }}" href="{{ route('units.index') }}">
-                    <div class="sb-nav-link-icon"><i class="fas fa-cubes"></i></div>
-                    Units
+                <!-- Taxes -->
+                <a class="nav-link {{ request()->routeIs('taxes.index') ? 'active' : '' }}" href="{{ route('taxes.index') }}">
+                    <div class="sb-nav-link-icon"><i class="fas fa-percent"></i></div>
+                    Taxes
                 </a>
-                <a class="nav-link {{ request()->routeIs('alternative-units.index') ? 'active' : '' }}" href="{{ route('alternative-units.index') }}">
+                <!-- Units -->
+
+                <a class="nav-link collapsed {{ request()->routeIs('units.index', 'alternative-units.index') ? 'active' : '' }}"
+                   href="#"
+                   data-bs-toggle="collapse"
+                   data-bs-target="#unitMenu"
+                   aria-expanded="{{ request()->routeIs('units.index', 'alternative-units.index') ? 'true' : 'false' }}"
+                   aria-controls="unitMenu">
                     <div class="sb-nav-link-icon"><i class="fas fa-cubes"></i></div>
-                   alternative Units
+                    Unit Management
+                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                </a>
+                <div class="collapse {{ request()->routeIs('units.index', 'alternative-units.index') ? 'show' : '' }}" id="unitMenu">
+                    <nav class="sb-sidenav-menu-nested nav">
+                        <a class="nav-link {{ request()->routeIs('units.index') ? 'active' : '' }}" href="{{ route('units.index') }}">Units</a>
+                        <a class="nav-link {{ request()->routeIs('alternative-units.index') ? 'active' : '' }}" href="{{ route('alternative-units.index') }}">Alternative Unit</a>
+                    </nav>
+                </div>
+
+                <!-- Customers -->
+                <a class="nav-link {{ request()->routeIs('customers.index') ? 'active' : '' }}" href="{{ route('customers.index') }}">
+                    <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>
+                    Customers
                 </a>
 
                 <!-- Items -->
@@ -62,17 +81,12 @@
                     Items
                 </a>
 
-                <!-- Taxes -->
-                <a class="nav-link {{ request()->routeIs('taxes.index') ? 'active' : '' }}" href="{{ route('taxes.index') }}">
-                    <div class="sb-nav-link-icon"><i class="fas fa-percent"></i></div>
-                    Taxes
+                <a class="nav-link {{ request()->routeIs('sales.index') ? 'active' : '' }}" href="{{ route('sales.index') }}">
+                    <div class="sb-nav-link-icon"><i class="fas fa-boxes"></i></div>
+                    Sales
                 </a>
 
-                <!-- Customers -->
-                <a class="nav-link {{ request()->routeIs('customers.index') ? 'active' : '' }}" href="{{ route('customers.index') }}">
-                    <div class="sb-nav-link-icon"><i class="fas fa-users"></i></div>
-                    Customers
-                </a>
+
 
                 <!-- Reports -->
 

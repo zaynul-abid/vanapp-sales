@@ -81,6 +81,8 @@ Route::middleware(['auth', 'usertype:employee'])->group(function () {
     Route::get('/search-items', [ItemController::class,'searchItems'])->name('search.items');
 
     Route::get('/reports-index',[ReportController::class,'index'])->name('reports.index');
+    Route::get('/reports/sale-item-details/{saleMasterId}',[ReportController::class,'showSaleItemDetails'])->name('showSale.item');
+    Route::get('/sales-report/export-pdf',[ReportController::class,'salesReportPdf'])->name('sales-report.pdf');
     Route::get('/customer-report', [ReportController::class, 'customerReport'])->name('customer_report.index');
     Route::get('/employee-report', [ReportController::class, 'employeeReport'])->name('employee_report.index');
     Route::get('/van-report', [ReportController::class, 'vanReport'])->name('van_report.index');
