@@ -22,7 +22,6 @@ class SalesController extends Controller
     }
     public function store(Request $request)
     {
-
         return DB::transaction(function () use ($request) {
             // Generate the Bill No
             $billNo = $this->generateBillNo();
@@ -33,6 +32,7 @@ class SalesController extends Controller
             // Validate stock availability by grouping items by default_item_id
             $itemQuantities = [];
             $itemNames = [];
+            $negativeStockItems = [];
 
             foreach ($request->input('items') as $item) {
                 $itemUnitDetailId = $item['item_id'];
@@ -54,9 +54,17 @@ class SalesController extends Controller
 
                 // Validate stock for this default_item_id
                 $itemRecord = Item::find($defaultItemId);
-                if (!$itemRecord || $itemRecord->current_stock < $itemQuantities[$defaultItemId]) {
-                    $availableStock = $itemRecord ? $itemRecord->current_stock : 0;
-                    return redirect()->back()->with('error', "Insufficient stock for item {$itemNames[$defaultItemId]}. Requested: {$itemQuantities[$defaultItemId]}, Available: {$availableStock}.");
+                if (!$itemRecord) {
+                    return redirect()->back()->with('error', "Item not found for {$itemNames[$defaultItemId]}.");
+                }
+
+                // Check if stock would go negative (but don't block it)
+                if ($itemRecord->current_stock < $itemQuantities[$defaultItemId]) {
+                    $negativeStockItems[] = [
+                        'name' => $itemNames[$defaultItemId],
+                        'requested' => $itemQuantities[$defaultItemId],
+                        'available' => $itemRecord->current_stock
+                    ];
                 }
             }
 
@@ -84,6 +92,7 @@ class SalesController extends Controller
                 'financial_year' => $financialYear,
                 'van_id' => $vanId,
                 'user_id' => auth()->id(),
+                'has_negative_stock' => !empty($negativeStockItems),
             ]);
 
             // Create Sale Items and Update Stock
@@ -111,7 +120,6 @@ class SalesController extends Controller
                     'total_quantity' =>  $item['total_quantity'],
                     'unit_quantity' => $item['unit_quantity'],
                     'custom_quantity' => $item['custom_quantity'],
-
                     'unit' => $item['unit'],
                     'gross_amount' => $item['gross_amount'],
                     'tax_amount' => $item['tax_amount'],
@@ -122,6 +130,7 @@ class SalesController extends Controller
                     'financial_year' => $financialYear,
                     'van_id' => $vanId,
                     'user_id' => auth()->id(),
+                    'has_negative_stock' => $itemUnitDetail->stock < $requestedQuantity,
                 ]);
 
                 // Reduce stock in items table for this item
@@ -134,9 +143,15 @@ class SalesController extends Controller
                     ->decrement('stock', $requestedQuantity);
             }
 
-            return redirect()->route('sales.index')->with('success', 'Sale created successfully.');
+            $message = 'Sale created successfully.';
+            if (!empty($negativeStockItems)) {
+                $message .= ' Warning: Some items are now in negative stock.';
+            }
+
+            return redirect()->route('sales.index')->with('success', $message);
         });
-        }
+    }
+
     /**
      * Generate the next bill number
      */
@@ -231,7 +246,6 @@ class SalesController extends Controller
 
     public function updateBill(Request $request, $id)
     {
-
         return DB::transaction(function () use ($request, $id) {
             // Find the existing SaleMaster record
             $saleMaster = SaleMaster::findOrFail($id);
@@ -242,6 +256,7 @@ class SalesController extends Controller
             // Validate stock availability by grouping items by default_item_id
             $itemQuantities = [];
             $itemNames = [];
+            $negativeStockItems = [];
 
             foreach ($request->input('items') as $item) {
                 $itemUnitDetailId = $item['item_id'];
@@ -276,8 +291,13 @@ class SalesController extends Controller
                 $existingQuantity = $existingSales->sum('total_quantity');
                 $availableStock = $itemRecord->current_stock + $existingQuantity;
 
+                // Check if stock would go negative (but don't block it)
                 if ($availableStock < $itemQuantities[$defaultItemId]) {
-                    return redirect()->back()->with('error', "Insufficient stock for item {$itemNames[$defaultItemId]}. Requested: {$itemQuantities[$defaultItemId]}, Available: {$availableStock}.");
+                    $negativeStockItems[] = [
+                        'name' => $itemNames[$defaultItemId],
+                        'requested' => $itemQuantities[$defaultItemId],
+                        'available' => $availableStock
+                    ];
                 }
             }
 
@@ -303,7 +323,7 @@ class SalesController extends Controller
             }
 
             // Delete existing Sale records
-          Sale::where('sale_master_id', $saleMaster->id)->delete();
+            Sale::where('sale_master_id', $saleMaster->id)->delete();
 
             // Update SaleMaster
             $saleMaster->update([
@@ -328,6 +348,7 @@ class SalesController extends Controller
                 'financial_year' => $financialYear,
                 'van_id' => $vanId,
                 'user_id' => auth()->id(),
+                'has_negative_stock' => !empty($negativeStockItems),
             ]);
 
             // Create new Sale Items and Update Stock
@@ -365,6 +386,7 @@ class SalesController extends Controller
                     'financial_year' => $financialYear,
                     'van_id' => $vanId,
                     'user_id' => auth()->id(),
+                    'has_negative_stock' => $itemUnitDetail->stock < $requestedQuantity,
                 ]);
 
                 // Reduce stock in Item table
@@ -377,7 +399,12 @@ class SalesController extends Controller
                     ->decrement('stock', $requestedQuantity);
             }
 
-            return redirect()->route('sales.index')->with('success', 'Sale updated successfully.');
+            $message = 'Sale updated successfully.';
+            if (!empty($negativeStockItems)) {
+                $message .= ' Warning: Some items are now in negative stock.';
+            }
+
+            return redirect()->route('sales.index')->with('success', $message);
         });
     }
 

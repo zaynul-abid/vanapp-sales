@@ -270,6 +270,17 @@
             <button type="submit" class="bg-green-500 text-white px-6 py-3 rounded hover:bg-green-600">Save Sale</button>
         </div>
     </form>
+
+    <div id="negativeStockModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 class="text-lg font-bold text-red-600 mb-4">Negative Stock Warning</h3>
+            <p id="negativeStockMessage" class="mb-6">You are about to enter negative stock for some items. Do you want to continue?</p>
+            <div class="flex justify-end space-x-4">
+                <button id="cancelNegativeStock" class="bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Cancel</button>
+                <button id="confirmNegativeStock" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Continue</button>
+            </div>
+        </div>
+    </div>
 </div>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://code.jquery.com/ui/1.13.1/jquery-ui.min.js"></script>
@@ -594,136 +605,83 @@
             return;
         }
 
-        // Optional: Validate stock
-        if (totalQuantity > stock) {
-            showErrorMessage('Total quantity exceeds available stock.');
-            return;
-        }
-
-        const priceType = rate === retailPrice ? 'Retail' : rate === wholesalePrice ? 'Wholesale' : 'Custom';
+        const priceType = rate === retailPrice ? 'Retail' : 'Wholesale';
         const grossAmount = rate * totalQuantity;
         const taxAmount = grossAmount * (taxPercentage / 100);
         const totalAmount = grossAmount + taxAmount;
 
-        // Check if item with same item_id, rate, and unit already exists
-        let existingRow = null;
-        const rows = document.querySelectorAll('.item-row');
-        rows.forEach(row => {
-            const rowItemId = row.querySelector('input[name$="[item_id]"]').value;
-            const rowRate = parseFloat(row.querySelector('input[name$="[rate]"]').value) || 0;
-            const rowUnit = row.querySelector('input[name$="[unit]"]').value;
-            if (rowItemId === itemId && rowRate === rate && rowUnit === unit) {
-                existingRow = row;
-            }
+        // Get the current row count to use as index
+        const rowCount = $('#item-rows tr').length;
+
+        const row = `
+            <tr class="item-row">
+                <td class="py-2 px-4 border-b">
+                    <input type="hidden" name="items[${rowCount}][item_id]" value="${itemId}">${itemId}
+                </td>
+                <td class="py-2 px-4 border-b">
+                    <input type="hidden" name="items[${rowCount}][item_name]" value="${itemName}">${itemName}
+                </td>
+                <td class="py-2 px-4 border-b relative">
+                    <div class="rate-display">${rate.toFixed(2)}</div>
+                    <div class="price-type-selector hidden absolute bg-white border border-gray-300 shadow-lg z-10 mt-1 rounded" style="width: 200px;">
+                        <div class="p-2 hover:bg-blue-50 cursor-pointer" data-price="${retailPrice}">Retail: ${retailPrice.toFixed(2)}</div>
+                        <div class="p-2 hover:bg-blue-50 cursor-pointer" data-price="${wholesalePrice}">Wholesale: ${wholesalePrice.toFixed(2)}</div>
+                    </div>
+                    <input type="hidden" name="items[${rowCount}][rate]" value="${rate.toFixed(2)}">
+                    <input type="hidden" name="items[${rowCount}][price_type]" value="${priceType}">
+                    <input type="hidden" name="items[${rowCount}][unit_price]" value="${rate.toFixed(2)}">
+                </td>
+                <td class="py-2 px-4 border-b">
+                    <input type="hidden" name="items[${rowCount}][unit]" value="${unit}">${unit}
+                </td>
+                <td class="py-2 px-4 border-b">
+                    <input type="hidden" name="items[${rowCount}][unit_quantity]" value="${unitQuantity.toFixed(2)}">${unitQuantity.toFixed(2)}
+                </td>
+                <td class="py-2 px-4 border-b">
+                    <input type="hidden" name="items[${rowCount}][custom_quantity]" value="${customQuantity.toFixed(2)}">${customQuantity.toFixed(2)}
+                </td>
+                <td class="py-2 px-4 border-b">
+                    <input type="hidden" name="items[${rowCount}][total_quantity]" value="${totalQuantity.toFixed(2)}">${totalQuantity.toFixed(2)}
+                </td>
+                <td class="py-2 px-4 border-b">
+                    <input type="hidden" name="items[${rowCount}][tax_percentage]" value="${taxPercentage.toFixed(2)}">${taxPercentage.toFixed(2)}
+                </td>
+                <td class="py-2 px-4 border-b">
+                    <input type="hidden" name="items[${rowCount}][stock]" value="${stock.toFixed(2)}">${stock.toFixed(2)}
+                </td>
+                <td class="py-2 px-4 border-b">
+                    <input type="hidden" name="items[${rowCount}][total_amount]" value="${totalAmount.toFixed(2)}">${totalAmount.toFixed(2)}
+                    <input type="hidden" name="items[${rowCount}][gross_amount]" value="${grossAmount.toFixed(2)}">
+                    <input type="hidden" name="items[${rowCount}][tax_amount]" value="${taxAmount.toFixed(2)}">
+                </td>
+                <td class="py-2 px-4 border-b">
+                    <button type="button" onclick="removeItemRow(this)" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Remove</button>
+                </td>
+            </tr>`;
+
+        document.getElementById('item-rows').insertAdjacentHTML('beforeend', row);
+
+        // Add click handler for rate cells
+        const rateDisplay = $('.rate-display').last();
+        const priceSelector = rateDisplay.next('.price-type-selector');
+
+        rateDisplay.on('click', function(e) {
+            e.stopPropagation();
+            $('.price-type-selector').addClass('hidden');
+            priceSelector.toggleClass('hidden');
         });
 
-        if (existingRow) {
-            // Update existing row
-            const existingCustomQuantityInput = existingRow.querySelector('input[name$="[custom_quantity]"]');
-            const existingTotalQuantityInput = existingRow.querySelector('input[name$="[total_quantity]"]');
-            const existingGrossAmountInput = existingRow.querySelector('input[name$="[gross_amount]"]');
-            const existingTaxAmountInput = existingRow.querySelector('input[name$="[tax_amount]"]');
-            const existingTotalAmountInput = existingRow.querySelector('input[name$="[total_amount]"]');
-
-            // Update quantities
-            const existingCustomQuantity = parseFloat(existingCustomQuantityInput.value) || 0;
-            const newCustomQuantity = existingCustomQuantity + customQuantity;
-            const newTotalQuantity = newCustomQuantity * unitQuantity;
-
-            // Validate stock for updated quantity
-            if (newTotalQuantity > stock) {
-                showErrorMessage('Updated total quantity exceeds available stock.');
-                return;
-            }
-
-            // Update gross and tax amounts
-            const newGrossAmount = rate * newTotalQuantity;
-            const newTaxAmount = newGrossAmount * (taxPercentage / 100);
-            const newTotalAmount = newGrossAmount + newTaxAmount;
-
-            // Update DOM elements
-            existingCustomQuantityInput.value = newCustomQuantity.toFixed(2);
-            existingRow.querySelector('td:nth-child(6)').textContent = newCustomQuantity.toFixed(2); // Update visible custom quantity
-            existingTotalQuantityInput.value = newTotalQuantity.toFixed(2);
-            existingRow.querySelector('td:nth-child(7)').textContent = newTotalQuantity.toFixed(2); // Update visible total quantity
-            existingGrossAmountInput.value = newGrossAmount.toFixed(2);
-            existingTaxAmountInput.value = newTaxAmount.toFixed(2);
-            existingTotalAmountInput.value = newTotalAmount.toFixed(2);
-            existingRow.querySelector('td:nth-child(10)').textContent = newTotalAmount.toFixed(2); // Update visible total amount
-        } else {
-            // Add new row
-            const rowCount = $('#item-rows tr').length;
-
-            const row = `
-                <tr class="item-row">
-                    <td class="py-2 px-4 border-b">
-                        <input type="hidden" name="items[${rowCount}][item_id]" value="${itemId}">${itemId}
-                    </td>
-                    <td class="py-2 px-4 border-b">
-                        <input type="hidden" name="items[${rowCount}][item_name]" value="${itemName}">${itemName}
-                    </td>
-                    <td class="py-2 px-4 border-b relative">
-                        <div class="rate-display">${rate.toFixed(2)}</div>
-                        <div class="price-type-selector hidden absolute bg-white border border-gray-300 shadow-lg z-10 mt-1 rounded" style="width: 200px;">
-                            <div class="p-2 hover:bg-blue-50 cursor-pointer" data-price="${retailPrice}">Retail: ${retailPrice.toFixed(2)}</div>
-                            <div class="p-2 hover:bg-blue-50 cursor-pointer" data-price="${wholesalePrice}">Wholesale: ${wholesalePrice.toFixed(2)}</div>
-                        </div>
-                        <input type="hidden" name="items[${rowCount}][rate]" value="${rate.toFixed(2)}">
-                        <input type="hidden" name="items[${rowCount}][price_type]" value="${priceType}">
-                        <input type="hidden" name="items[${rowCount}][unit_price]" value="${rate.toFixed(2)}">
-                    </td>
-                    <td class="py-2 px-4 border-b">
-                        <input type="hidden" name="items[${rowCount}][unit]" value="${unit}">${unit}
-                    </td>
-                    <td class="py-2 px-4 border-b">
-                        <input type="hidden" name="items[${rowCount}][unit_quantity]" value="${unitQuantity.toFixed(2)}">${unitQuantity.toFixed(2)}
-                    </td>
-                    <td class="py-2 px-4 border-b">
-                        <input type="hidden" name="items[${rowCount}][custom_quantity]" value="${customQuantity.toFixed(2)}">${customQuantity.toFixed(2)}
-                    </td>
-                    <td class="py-2 px-4 border-b">
-                        <input type="hidden" name="items[${rowCount}][total_quantity]" value="${totalQuantity.toFixed(2)}">${totalQuantity.toFixed(2)}
-                    </td>
-                    <td class="py-2 px-4 border-b">
-                        <input type="hidden" name="items[${rowCount}][tax_percentage]" value="${taxPercentage.toFixed(2)}">${taxPercentage.toFixed(2)}
-                    </td>
-                    <td class="py-2 px-4 border-b">
-                        <input type="hidden" name="items[${rowCount}][stock]" value="${stock.toFixed(2)}">${stock.toFixed(2)}
-                    </td>
-                    <td class="py-2 px-4 border-b">
-                        <input type="hidden" name="items[${rowCount}][total_amount]" value="${totalAmount.toFixed(2)}">${totalAmount.toFixed(2)}
-                        <input type="hidden" name="items[${rowCount}][gross_amount]" value="${grossAmount.toFixed(2)}">
-                        <input type="hidden" name="items[${rowCount}][tax_amount]" value="${taxAmount.toFixed(2)}">
-                    </td>
-                    <td class="py-2 px-4 border-b">
-                        <button type="button" onclick="removeItemRow(this)" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Remove</button>
-                    </td>
-                </tr>`;
-
-            document.getElementById('item-rows').insertAdjacentHTML('beforeend', row);
-
-            // Add click handler for rate cells
-            const rateDisplay = $('.rate-display').last();
-            const priceSelector = rateDisplay.next('.price-type-selector');
-
-            rateDisplay.on('click', function(e) {
-                e.stopPropagation();
-                $('.price-type-selector').addClass('hidden');
-                priceSelector.toggleClass('hidden');
-            });
-
-            // Add handler for price selection
-            priceSelector.find('div').on('click', function() {
-                const newPrice = parseFloat($(this).data('price'));
-                const row = $(this).closest('tr');
-                row.find('.rate-display').text(newPrice.toFixed(2));
-                row.find('input[name^="items["][name$="[rate]"]').val(newPrice.toFixed(2));
-                row.find('input[name^="items["][name$="[unit_price]"]').val(newPrice.toFixed(2));
-                row.find('input[name^="items["][name$="[price_type]"]').val($(this).text().includes('Retail') ? 'Retail' : 'Wholesale');
-                priceSelector.addClass('hidden');
-                updateTotals();
-            });
-        }
+        // Add handler for price selection
+        priceSelector.find('div').on('click', function() {
+            const newPrice = parseFloat($(this).data('price'));
+            const row = $(this).closest('tr');
+            row.find('.rate-display').text(newPrice.toFixed(2));
+            row.find('input[name^="items["][name$="[rate]"]').val(newPrice.toFixed(2));
+            row.find('input[name^="items["][name$="[unit_price]"]').val(newPrice.toFixed(2));
+            row.find('input[name^="items["][name$="[price_type]"]').val($(this).text().includes('Retail') ? 'Retail' : 'Wholesale');
+            priceSelector.addClass('hidden');
+            updateTotals();
+        });
 
         // Clear input fields
         document.getElementById('item_id_input').value = '';
@@ -981,7 +939,7 @@
             }
         });
 
-        // Handle bill seleção
+        // Handle bill selection
         $(document).on('click', '.bill-item', function() {
             const billId = $(this).data('id');
             const billNo = $(this).data('bill-no');
@@ -1147,6 +1105,91 @@
         // Reset totals
         updateTotals();
     }
+
+    // Global variable to store the form submission state
+    let formSubmissionInProgress = false;
+    let formToSubmit = null;
+
+    // Modify the validateForm function to handle negative stock
+    function validateForm() {
+        clearErrorMessages();
+
+        const netTotalAmount = parseFloat(document.getElementById('net_total_amount').value) || 0;
+        const totalPayment = parseFloat(document.getElementById('total_payment_amount').value) || 0;
+        let isValid = true;
+
+        if (Math.abs(netTotalAmount - totalPayment) > 0.01) {
+            showErrorMessage('Total payment amount must equal the net total amount.');
+            isValid = false;
+        }
+
+        // Check for negative stock in the items table
+        const rows = document.querySelectorAll('.item-row');
+        let negativeStockItems = [];
+
+        rows.forEach(row => {
+            const stock = parseFloat(row.querySelector('input[name^="items["][name$="[stock]"]').value) || 0;
+            const totalQuantity = parseFloat(row.querySelector('input[name^="items["][name$="[total_quantity]"]').value) || 0;
+            const itemName = row.querySelector('td:nth-child(2)').textContent.trim();
+
+            if (totalQuantity > stock) {
+                negativeStockItems.push({
+                    name: itemName,
+                    requested: totalQuantity,
+                    available: stock
+                });
+            }
+        });
+
+        if (negativeStockItems.length > 0) {
+            // Show the negative stock modal
+            const modal = document.getElementById('negativeStockModal');
+            const message = document.getElementById('negativeStockMessage');
+
+            let messageText = 'You are about to enter negative stock for the following items:<br><br>';
+            negativeStockItems.forEach(item => {
+                messageText += `<strong>${item.name}</strong>: Requested ${item.requested}, Available ${item.available}<br>`;
+            });
+            messageText += '<br>Do you want to continue?';
+
+            message.innerHTML = messageText;
+            modal.classList.remove('hidden');
+
+            // Store the form reference
+            formToSubmit = event.target;
+
+            // Prevent form submission
+            event.preventDefault();
+            return false;
+        }
+
+        return isValid;
+    }
+
+    // Handle modal button clicks
+    document.getElementById('cancelNegativeStock').addEventListener('click', function() {
+        document.getElementById('negativeStockModal').classList.add('hidden');
+        formToSubmit = null;
+    });
+
+    document.getElementById('confirmNegativeStock').addEventListener('click', function() {
+        document.getElementById('negativeStockModal').classList.add('hidden');
+        if (formToSubmit) {
+            formToSubmit.submit();
+        }
+    });
+
+    // Prevent double submission
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (formSubmissionInProgress) {
+            e.preventDefault();
+            return false;
+        }
+
+        formSubmissionInProgress = true;
+        // Show loading indicator if needed
+        // document.getElementById('submitButton').disabled = true;
+    });
 </script>
 </body>
 </html>
