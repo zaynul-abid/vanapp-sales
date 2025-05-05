@@ -32,6 +32,7 @@ class ItemController extends Controller
 
     public function store(Request $request)
     {
+
         $request->validate([
             'name' => 'required|string|max:255',
             'default_category_id' => 'required|exists:categories,id',
@@ -40,7 +41,7 @@ class ItemController extends Controller
             'purchase_price' => 'required|numeric',
             'wholesale_price' => 'required|numeric',
             'retail_price' => 'required|numeric',
-            'opening_stock' => 'required|numeric',
+//            'opening_stock' => 'required|numeric',
             'image' => 'nullable|image|max:2048',
             'status' => 'required|boolean',
         ]);

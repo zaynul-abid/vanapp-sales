@@ -124,7 +124,7 @@
                                         {{ isset($item) ? 'Stock Adjustment' : 'Opening Stock' }}
                                     </label>
                                     <input type="number" class="form-control form-control-sm @error('stock') is-invalid @enderror"
-                                           id="stock" name="stock" value="{{ old('stock') }}"
+                                           id="stock" name="opening_stock" value="{{ old('opening_stock') }}"
                                            {{ !isset($item) ? 'required' : '' }} data-input-index="7"
                                            placeholder="{{ isset($item) ? 'Enter stock adjustment (e.g., +10 or -5)' : 'Enter initial stock' }}">
                                     @error('stock')
