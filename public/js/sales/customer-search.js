@@ -47,6 +47,7 @@ $(document).ready(function() {
         }
     });
 
+    // Handle keyboard navigation for customers
     $('#customer_name').on('keydown', function(e) {
         let suggestions = $('#customer_suggestions');
         let items = suggestions.find('.customer-item');
@@ -91,20 +92,15 @@ $(document).ready(function() {
         $('#item_name_input').focus();
     }
 
+    // Handle mouse selection
     $(document).on('click', '#customer_suggestions .customer-item', function() {
         selectCustomer($(this));
     });
 
+    // Hide suggestions when clicking elsewhere
     $(document).on('click', function(e) {
         if (!$(e.target).closest('#customer_name, #customer_suggestions').length) {
             $('#customer_suggestions').addClass('hidden');
         }
     });
 });
-
-function handleCustomerEnter(event) {
-    if (event.keyCode === 13) {
-        event.preventDefault();
-        $('#item_name_input').focus();
-    }
-}

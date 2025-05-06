@@ -1,40 +1,72 @@
 function validateForm() {
-    clearErrorMessages();
+    // Reset error messages
+    $('#client-error-messages').empty();
 
-    const netTotalAmount = parseFloat(document.getElementById('net_total_amount').value) || 0;
-    const totalPayment = parseFloat(document.getElementById('total_payment_amount').value) || 0;
-    const rows = document.querySelectorAll('.item-row');
-    let isValid = true;
+    // Basic form validation (e.g., customer name, items)
+    if (!$('#customer_name').val().trim()) {
+        showErrorMessage('Please enter a customer name.');
+        return false;
+    }
 
-    const itemQuantities = {};
-    const itemDetails = {};
+    // Check for items
+    const itemRows = $('#item-rows .item-row');
+    if (itemRows.length === 0) {
+        showErrorMessage('Please add at least one item to the order.');
+        return false;
+    }
 
-    rows.forEach(row => {
-        const itemId = row.querySelector('input[name^="items["][name$="[item_id]"]').value;
-        const itemName = row.querySelector('input[name^="items["][name$="[item_name]"]').value;
-        const totalQuantity = parseFloat(row.querySelector('input[name^="items["][name$="[total_quantity]"]').value) || 0;
-        const stock = parseFloat(row.querySelector('input[name^="items["][name$="[stock]"]').value) || 0;
+    // Check for negative stock
+    let hasNegativeStock = false;
+    let negativeStockMessage = 'The following items have insufficient stock. Please adjust quantities or confirm to proceed with negative stock:<ul>';
+    itemRows.each(function() {
+        const stock = parseFloat($(this).find('input[name$="[stock]"]').val()) || 0;
+        const totalQuantity = parseFloat($(this).find('input[name$="[total_quantity]"]').val()) || 0;
+        const itemName = $(this).find('input[name$="[item_name]"]').val();
+        const remainingStock = stock - totalQuantity;
 
-        if (!itemQuantities[itemId]) {
-            itemQuantities[itemId] = 0;
-            itemDetails[itemId] = { name: itemName, stock: stock };
+        if (remainingStock < 0) {
+            hasNegativeStock = true;
+            negativeStockMessage += `<li><strong>${itemName}</strong>: ${remainingStock.toFixed(2)} (Current stock: ${stock.toFixed(2)}, Requested: ${totalQuantity.toFixed(2)})</li>`;
         }
-        itemQuantities[itemId] += totalQuantity;
     });
+    negativeStockMessage += '</ul>';
 
-    for (const itemId in itemQuantities) {
-        const totalQuantity = itemQuantities[itemId];
-        const { name, stock } = itemDetails[itemId];
-        if (totalQuantity > stock) {
-            showErrorMessage(`Total quantity (${totalQuantity.toFixed(2)}) for item ${name} exceeds available stock (${stock.toFixed(2)}).`);
-            isValid = false;
-        }
+    if (hasNegativeStock) {
+        // Show negative stock modal
+        $('#negativeStockMessage').html(negativeStockMessage);
+        $('#negativeStockModal').removeClass('hidden');
+
+        // Store the form for later submission
+        window.pendingForm = $('form')[0];
+
+        // Create a promise to handle modal response
+        window.negativeStockPromise = new Promise((resolve, reject) => {
+            window.negativeStockPromiseResolve = resolve;
+            window.negativeStockPromiseReject = reject;
+        });
+
+        // Handle the promise resolution
+        window.negativeStockPromise.then(() => {
+            console.log('User confirmed negative stock, submitting form');
+            window.pendingForm.submit();
+        }).catch(() => {
+            console.log('User canceled negative stock confirmation');
+            window.pendingForm = null;
+        });
+
+        // Prevent immediate form submission
+        return false;
     }
 
-    if (Math.abs(netTotalAmount - totalPayment) > 0.01) {
-        showErrorMessage('Total payment amount must equal the net total amount.');
-        isValid = false;
-    }
+    // If no negative stock, allow form submission
+    return true;
+}
 
-    return isValid;
+function showErrorMessage(message) {
+    $('#client-error-messages').append(
+        `<div class="flex items-center justify-between p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg" role="alert" aria-live="assertive">
+            <div><strong class="font-bold">Error: </strong> ${message}</div>
+            <button type="button" class="text-red-700 hover:text-red-900" onclick="this.parentElement.remove()" aria-label="Close error message">✖</button>
+        </div>`
+    );
 }

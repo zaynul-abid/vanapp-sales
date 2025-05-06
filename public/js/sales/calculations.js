@@ -3,6 +3,7 @@ function updateTotals() {
     let grossAmount = 0;
     let taxAmount = 0;
 
+    // Calculate Gross Amount and Tax Amount before discount
     rows.forEach(row => {
         const rate = parseFloat(row.querySelector('input[name^="items["][name$="[rate]"]').value) || 0;
         const totalQuantity = parseFloat(row.querySelector('input[name^="items["][name$="[total_quantity]"]').value) || 0;
@@ -18,6 +19,7 @@ function updateTotals() {
     const discount = parseFloat(document.getElementById('discount').value) || 0;
     const netGrossAmount = grossAmount - discount;
 
+    // Recalculate tax after discount by distributing discount proportionally
     let netTaxAmount = 0;
     if (grossAmount > 0) {
         rows.forEach(row => {
@@ -56,29 +58,43 @@ function updatePaymentFields() {
     const cardInput = document.getElementById('card_amount');
     const creditInput = document.getElementById('credit_amount');
 
+    // Disable all inputs by default
+    cashInput.disabled = true;
+    upiInput.disabled = true;
+    cardInput.disabled = true;
+    creditInput.disabled = true;
+
     document.getElementById('sale_type').value = paymentOption;
 
     if (paymentOption === 'Cash') {
+        cashInput.disabled = false;
         cashInput.value = netTotalAmount.toFixed(2);
         upiInput.value = '';
         cardInput.value = '';
         creditInput.value = '';
     } else if (paymentOption === 'UPI') {
+        upiInput.disabled = false;
         cashInput.value = '';
         upiInput.value = netTotalAmount.toFixed(2);
         cardInput.value = '';
         creditInput.value = '';
     } else if (paymentOption === 'Card') {
+        cardInput.disabled = false;
         cashInput.value = '';
         upiInput.value = '';
         cardInput.value = netTotalAmount.toFixed(2);
         creditInput.value = '';
     } else if (paymentOption === 'Credit') {
+        creditInput.disabled = false;
         cashInput.value = '';
         upiInput.value = '';
         cardInput.value = '';
         creditInput.value = netTotalAmount.toFixed(2);
     } else if (paymentOption === 'Other') {
+        cashInput.disabled = false;
+        upiInput.disabled = false;
+        cardInput.disabled = false;
+        creditInput.disabled = false;
         cashInput.value = '';
         upiInput.value = '';
         cardInput.value = '';
@@ -97,6 +113,7 @@ function updateTotalPayment() {
 
     const nonCreditTotal = cashAmount + upiAmount + cardAmount;
 
+    // If non-credit fields sum to less than net total, auto-fill credit with the remaining amount
     if (nonCreditTotal < netTotalAmount) {
         const remainingAmount = netTotalAmount - nonCreditTotal;
         creditInput.value = remainingAmount.toFixed(2);
@@ -106,29 +123,9 @@ function updateTotalPayment() {
 
     const totalPayment = nonCreditTotal + (parseFloat(creditInput.value) || 0);
     document.getElementById('total_payment_amount').value = totalPayment.toFixed(2);
-}
 
-function handlePaymentEnter(event, currentId) {
-    if (event.keyCode === 13) {
-        event.preventDefault();
-        const netTotalAmount = parseFloat(document.getElementById('net_total_amount').value) || 0;
-        const totalPayment = parseFloat(document.getElementById('total_payment_amount').value) || 0;
-
-        if (Math.abs(netTotalAmount - totalPayment) <= 0.01) {
-            return;
-        }
-
-        const paymentInputs = ['cash_amount', 'upi_amount', 'card_amount', 'credit_amount'];
-        const currentIndex = paymentInputs.indexOf(currentId);
-        let nextIndex = (currentIndex + 1) % paymentInputs.length;
-
-        for (let i = 0; i < paymentInputs.length; i++) {
-            const input = document.getElementById(paymentInputs[nextIndex]);
-            if (!input.value || parseFloat(input.value) === 0) {
-                input.focus();
-                break;
-            }
-            nextIndex = (nextIndex + 1) % paymentInputs.length;
-        }
+    // Check if total payment exceeds net total amount
+    if (totalPayment > netTotalAmount + 0.01) {
+        showPaymentErrorPopup();
     }
 }

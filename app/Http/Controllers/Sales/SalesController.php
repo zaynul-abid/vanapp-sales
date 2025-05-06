@@ -22,6 +22,7 @@ class SalesController extends Controller
     }
     public function store(Request $request)
     {
+        dd($request->all());
         return DB::transaction(function () use ($request) {
             // Generate the Bill No
             $billNo = $this->generateBillNo();

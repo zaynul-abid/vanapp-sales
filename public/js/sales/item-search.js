@@ -1,6 +1,8 @@
 $(document).ready(function() {
+    // Create suggestions container for items
     $('body').append('<div id="item_suggestions" class="hidden absolute z-10 mt-1 bg-white shadow-lg rounded-md border border-gray-300 max-h-60 overflow-auto" style="width: 300px;"></div>');
 
+    // Position the suggestions box below the item name input
     $('#item_name_input').on('focus', function() {
         const inputRect = this.getBoundingClientRect();
         $('#item_suggestions').css({
@@ -73,6 +75,7 @@ $(document).ready(function() {
         }
     });
 
+    // Handle keyboard navigation for items
     $('#item_name_input').on('keydown', function(e) {
         let suggestions = $('#item_suggestions');
         let items = suggestions.find('.item-suggestion');
@@ -118,16 +121,19 @@ $(document).ready(function() {
         $('#rate_input').data('wholesale', item.data('wholesale'));
         $('#custom_quantity_input').val('');
         $('#total_quantity_input').val('');
+        $('#total_amount_display').val('');
         $('#item_suggestions').addClass('hidden');
         itemCurrentFocus = -1;
         $('#custom_quantity_input').focus();
         updateTotalQuantity();
     }
 
+    // Handle mouse selection for items
     $(document).on('click', '#item_suggestions .item-suggestion', function() {
         selectItem($(this));
     });
 
+    // Hide item suggestions when clicking elsewhere
     $(document).on('click', function(e) {
         if (!$(e.target).closest('#item_name_input, #item_suggestions').length) {
             $('#item_suggestions').addClass('hidden');

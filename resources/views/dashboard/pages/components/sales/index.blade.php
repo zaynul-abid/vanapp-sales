@@ -130,8 +130,7 @@
                     <input type="hidden" id="item_id_input">
                 </div>
                 <div>
-                    <label for="rate_input" class="block text-sm font-medium text-gray-7
-00 mb-1">Rate</label>
+                    <label for="rate_input" class="block text-sm font-medium text-gray-700 mb-1">Rate</label>
                     <input type="number" id="rate_input" step="0.01" class="min-w-0 flex-grow w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" onkeydown="preventEnter(event)">
                 </div>
                 <div>
@@ -322,6 +321,21 @@
     function clearErrorMessages() {
         const errorContainer = document.getElementById('client-error-messages');
         errorContainer.innerHTML = '';
+    }
+
+    // Helper function to clear input fields
+    function clearInputFields() {
+        document.getElementById('item_id_input').value = '';
+        document.getElementById('item_name_input').value = '';
+        document.getElementById('rate_input').value = '';
+        document.getElementById('unit_quantity_input').value = '';
+        document.getElementById('custom_quantity_input').value = '';
+        document.getElementById('total_quantity_input').value = '';
+        document.getElementById('unit_input').value = '';
+        document.getElementById('tax_percentage_input').value = '';
+        document.getElementById('stock_input').value = '';
+        document.getElementById('total_amount_display').value = '';
+        $('#rate_input').removeData('retail').removeData('wholesale'); // Clear jQuery data
     }
 
     // Payment error popup functions
@@ -640,14 +654,38 @@
             return;
         }
 
+        // Check for duplicate item (same item_id, unit, and rate)
+        let isDuplicate = false;
+        let duplicateRow = null;
+        let existingCustomQuantity = 0;
+        const rows = document.querySelectorAll('.item-row');
+        rows.forEach(row => {
+            const existingItemId = row.querySelector('input[name^="items["][name$="[item_id]"]').value;
+            const existingUnit = row.querySelector('input[name^="items["][name$="[unit]"]').value;
+            const existingRate = parseFloat(row.querySelector('input[name^="items["][name$="[rate]"]').value) || 0;
+
+            if (existingItemId === itemId && existingUnit === unit && existingRate === rate) {
+                isDuplicate = true;
+                duplicateRow = row;
+                existingCustomQuantity = parseFloat(row.querySelector('input[name^="items["][name$="[custom_quantity]"]').value) || 0;
+            }
+        });
+
+        // Calculate quantities and amounts
+        const newCustomQuantity = isDuplicate ? (existingCustomQuantity + customQuantity) : customQuantity;
+        const newTotalQuantity = newCustomQuantity * unitQuantity;
         const priceType = rate === retailPrice ? 'Retail' : 'Wholesale';
-        const grossAmount = rate * totalQuantity;
+        const grossAmount = rate * newTotalQuantity;
         const taxAmount = grossAmount * (taxPercentage / 100);
         const totalAmount = grossAmount + taxAmount;
 
-        // Get the current row count to use as index
-        const rowCount = $('#item-rows tr').length + 1;
+        if (isDuplicate) {
+            // Remove the existing duplicate row
+            duplicateRow.remove();
+        }
 
+        // Add new row (for both duplicate and non-duplicate cases)
+        const rowCount = $('#item-rows tr').length + 1;
         const row = `
             <tr class="item-row">
                 <td class="py-2 px-4 border-b">
@@ -671,7 +709,7 @@
                     <input type="hidden" name="items[${rowCount-1}][tax_percentage]" value="${taxPercentage.toFixed(2)}">${taxPercentage.toFixed(2)}
                 </td>
                 <td class="py-2 px-4 border-b">
-                    <input type="hidden" name="items[${rowCount-1}][custom_quantity]" value="${customQuantity.toFixed(2)}">${customQuantity.toFixed(2)}
+                    <input type="hidden" name="items[${rowCount-1}][custom_quantity]" value="${newCustomQuantity.toFixed(2)}">${newCustomQuantity.toFixed(2)}
                 </td>
                 <td class="py-2 px-4 border-b">
                     <input type="hidden" name="items[${rowCount-1}][unit]" value="${unit}">${unit}
@@ -683,7 +721,7 @@
                     <input type="hidden" name="items[${rowCount-1}][stock]" value="${stock.toFixed(2)}">${stock.toFixed(2)}
                 </td>
                 <td class="py-2 px-4 border-b">
-                    <input type="hidden" name="items[${rowCount-1}][total_quantity]" value="${totalQuantity.toFixed(2)}">${totalQuantity.toFixed(2)}
+                    <input type="hidden" name="items[${rowCount-1}][total_quantity]" value="${newTotalQuantity.toFixed(2)}">${newTotalQuantity.toFixed(2)}
                 </td>
                 <td class="py-2 px-4 border-b">
                     <input type="hidden" name="items[${rowCount-1}][total_amount]" value="${totalAmount.toFixed(2)}">${totalAmount.toFixed(2)}
@@ -715,27 +753,46 @@
             row.find('input[name^="items["][name$="[rate]"]').val(newPrice.toFixed(2));
             row.find('input[name^="items["][name$="[unit_price]"]').val(newPrice.toFixed(2));
             row.find('input[name^="items["][name$="[price_type]"]').val($(this).text().includes('Retail') ? 'Retail' : 'Wholesale');
+
+            // Recalculate amounts after rate change
+            const customQty = parseFloat(row.querySelector('input[name^="items["][name$="[custom_quantity]"]').value) || 0;
+            const unitQty = parseFloat(row.querySelector('input[name^="items["][name$="[unit_quantity]"]').value) || 0;
+            const taxPercent = parseFloat(row.querySelector('input[name^="items["][name$="[tax_percentage]"]').value) || 0;
+            const totalQty = customQty * unitQty;
+            const grossAmt = newPrice * totalQty;
+            const taxAmt = grossAmt * (taxPercent / 100);
+            const totalAmt = grossAmt + taxAmt;
+
+            row.find('input[name^="items["][name$="[total_quantity]"]').value = totalQty.toFixed(2);
+            row.find('td:nth-child(7)').textContent = totalQty.toFixed(2); // Total Qty
+            row.find('input[name^="items["][name$="[gross_amount]"]').value = grossAmt.toFixed(2);
+            row.find('input[name^="items["][name$="[tax_amount]"]').value = taxAmt.toFixed(2);
+            row.find('input[name^="items["][name$="[total_amount]"]').value = totalAmt.toFixed(2);
+            row.find('td:nth-child(8)').textContent = totalAmt.toFixed(2); // Total Amount
+
             priceSelector.addClass('hidden');
             updateTotals();
         });
 
         // Clear input fields
-        document.getElementById('item_id_input').value = '';
-        document.getElementById('item_name_input').value = '';
-        document.getElementById('rate_input').value = '';
-        document.getElementById('unit_quantity_input').value = '';
-        document.getElementById('custom_quantity_input').value = '';
-        document.getElementById('total_quantity_input').value = '';
-        document.getElementById('unit_input').value = '';
-        document.getElementById('tax_percentage_input').value = '';
-        document.getElementById('stock_input').value = '';
-        document.getElementById('total_amount_display').value = '';
+        clearInputFields();
 
+        // Update totals
         updateTotals();
     }
 
     function removeItemRow(button) {
         button.closest('.item-row').remove();
+        // Reindex rows
+        const rows = document.querySelectorAll('.item-row');
+        rows.forEach((row, index) => {
+            row.querySelector('td:first-child').textContent = index + 1;
+            const inputs = row.querySelectorAll('input[name^="items["]');
+            inputs.forEach(input => {
+                const name = input.name.replace(/items\[\d+\]/, `items[${index}]`);
+                input.name = name;
+            });
+        });
         updateTotals();
     }
 
