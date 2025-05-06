@@ -22,7 +22,8 @@ class SalesController extends Controller
     }
     public function store(Request $request)
     {
-        dd($request->all());
+
+
         return DB::transaction(function () use ($request) {
             // Generate the Bill No
             $billNo = $this->generateBillNo();
@@ -210,44 +211,52 @@ class SalesController extends Controller
         }
     }
 
-
     public function loadBill($id)
     {
-        $saleMaster = SaleMaster::with(['sales', 'customer'])->findOrFail($id);
-        return response()->json([
-            'master' => $saleMaster,
-            'items' => $saleMaster->sales->map(function($item) {
-                // Fetch stock
-                $stock = \DB::table('item_unit_details')
-                    ->where('id', $item->item_id)
-                    ->value('stock');
-                // Log the item ID and stock
-                Log::info('Stock fetched', [
-                    'item_id' => $item->item_id,
-                    'stock' => $stock
-                ]);
-                return [
-                    'item_id' => $item->item_id,
-                    'item_name' => $item->item_name,
-                    'rate' => $item->rate,
-                    'unit' => $item->unit,
-                    'unit_quantity' => $item->quantity,
-                    'total_quantity' => $item->total_quantity,
-                    'tax_percentage' => $item->tax_percentage,
-                    'stock' => $stock ?? 0,
-                    'total_amount' => $item->total_amount,
-                    'gross_amount' => $item->gross_amount,
-                    'tax_amount' => $item->tax_amount,
-                    'price_type' => $item->price_type,
-                    'unit_price' => $item->unit_price,
-                ];
-            }),
-        ]);
+        try {
+            $saleMaster = SaleMaster::with(['sales', 'customer'])->findOrFail($id);
+            return response()->json([
+                'master' => $saleMaster,
+                'items' => $saleMaster->sales->map(function($item) {
+                    // Fetch stock
+                    $stock = \DB::table('item_unit_details')
+                        ->where('id', $item->item_id)
+                        ->value('stock');
+                    // Log the item ID and stock
+                    Log::info('Stock fetched', [
+                        'item_id' => $item->item_id,
+                        'stock' => $stock
+                    ]);
+                    return [
+                        'item_id' => $item->item_id,
+                        'item_name' => $item->item_name,
+                        'rate' => $item->rate,
+                        'unit' => $item->unit,
+                        'unit_quantity' => $item->unit_quantity,
+                        'custom_quantity' => $item->custom_quantity,
+                        'total_quantity' => $item->total_quantity,
+                        'tax_percentage' => $item->tax_percentage,
+                        'stock' => $stock ?? 0,
+                        'total_amount' => $item->total_amount,
+                        'gross_amount' => $item->gross_amount,
+                        'tax_amount' => $item->tax_amount,
+                        'price_type' => $item->price_type,
+                        'unit_price' => $item->unit_price,
+                    ];
+                }),
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Load bill failed: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            return response()->json([
+                'error' => 'Failed to load bill details.'
+            ], 500);
+        }
     }
 
     public function updateBill(Request $request, $id)
 
     {
+
 
         return DB::transaction(function () use ($request, $id) {
             // Find the existing SaleMaster record
