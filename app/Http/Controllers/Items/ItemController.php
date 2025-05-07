@@ -41,7 +41,6 @@ class ItemController extends Controller
             'purchase_price' => 'required|numeric',
             'wholesale_price' => 'required|numeric',
             'retail_price' => 'required|numeric',
-//            'opening_stock' => 'required|numeric',
             'image' => 'nullable|image|max:2048',
             'status' => 'required|boolean',
         ]);

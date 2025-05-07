@@ -49,6 +49,7 @@ Route::get('/change/unit/{id}',[UnitController::class,'showUnit'])->name('show-u
     Route::get('/items/units/{id}/delete', [UnitController::class, 'deleteUnit'])->name('unit.item.delete');
 
 
+    Route::get('/sales/sale-item-details/{saleMasterId}',[SalesController::class,'showSaleItem'])->name('saleItem.details');
 
 
 
@@ -66,7 +67,7 @@ Route::middleware(['auth', 'usertype:employee'])->group(function () {
 
     Route::resource('items', ItemController::class);
     Route::resource('sales', SalesController::class)->only([
-        'index', 'create', 'store',
+        'index', 'create', 'store','destroy',
     ]);
     Route::get('sales/search-bills', [SalesController::class, 'searchBills'])->name('sales.search-bills');
     Route::get('sales/load-bill/{id}', [SalesController::class, 'loadBill'])->name('sales.load-bill');
@@ -83,10 +84,22 @@ Route::middleware(['auth', 'usertype:employee'])->group(function () {
     Route::get('/reports-index',[ReportController::class,'index'])->name('reports.index');
     Route::get('/reports/sale-item-details/{saleMasterId}',[ReportController::class,'showSaleItemDetails'])->name('showSale.item');
     Route::get('/sales-report/export-pdf',[ReportController::class,'salesReportPdf'])->name('sales-report.pdf');
+
     Route::get('/customer-report', [ReportController::class, 'customerReport'])->name('customer_report.index');
+    Route::get('/customer-report/details/{customer_id}', [ReportController::class, 'showCustomerDetails'])->name('customer_report.details');
+    Route::get('/customer-report/pdf', [ReportController::class, 'customerReportPdf'])->name('customer_report.pdf');
+
     Route::get('/employee-report', [ReportController::class, 'employeeReport'])->name('employee_report.index');
+    Route::get('/employee-report/details/{employee_id}', [ReportController::class, 'ShowEmployeeDetails'])->name('employee_report.details');
+    Route::get('/employee-report/pdf', [ReportController::class, 'EmployeeReportPdf'])->name('employee_report.pdf');
+
     Route::get('/van-report', [ReportController::class, 'vanReport'])->name('van_report.index');
+    Route::get('/van-report/details/{van_id}', [ReportController::class, 'ShowVanDetails'])->name('van_report.details');
+    Route::get('/van-report/pdf', [ReportController::class, 'vanReportPdf'])->name('van_report.pdf');
+
     Route::get('/stock-report', [ReportController::class, 'stockReport'])->name('stock_report.index');
+    Route::get('/stock-report/details/{item_id}', [ReportController::class, 'ShowStockDetails'])->name('stock_report.details');
+    Route::get('/stock-report/pdf', [ReportController::class, 'stockReportPdf'])->name('stock_report.pdf');
 
 });
 

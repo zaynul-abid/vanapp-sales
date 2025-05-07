@@ -42,6 +42,7 @@
 </head>
 <body>
 <div class="container">
+    <a href="{{ route('sales.index') }}" class="btn btn-primary mt-3">Back</a>
     <h1 class="mt-4 mb-4">Sales Report</h1>
 
     <!-- Filter Form -->
@@ -151,7 +152,7 @@
                         <td>{{ $saleMaster->van->name ?? 'N/A' }}</td>
                         <td>{{ number_format($saleMaster->net_total_amount, 2) }}</td>
                         <td>
-                            <a href="{{ route('showSale.item', $saleMaster->id) }}" class="btn btn-sm btn-info" target="_blank">Show Details</a>
+                            <a href="{{ route('showSale.item', $saleMaster->id) }}" class="btn btn-sm btn-info" target="_blank"> Details</a>
                         </td>
                     </tr>
                 @endforeach

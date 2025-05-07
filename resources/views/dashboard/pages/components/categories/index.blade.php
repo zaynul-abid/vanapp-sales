@@ -40,6 +40,7 @@
                 <tr>
                     <th>#</th>
                     <th>Name</th>
+                    <th>Description</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -49,6 +50,7 @@
                     <tr>
                         <td>{{ ($categories->currentPage() - 1) * $categories->perPage() + $loop->iteration }}</td>
                         <td>{{ $category->name }}</td>
+                        <td>{{ $category->description }}</td>
                         <td>
                             <span class="badge bg-{{ $category->status ? 'success' : 'danger' }}">
                                 {{ $category->status ? 'Active' : 'Inactive' }}

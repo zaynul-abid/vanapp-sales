@@ -30,7 +30,7 @@ class CategorySeeder extends Seeder
             Category::create([
                 'name' => $name,
                 'description' => $description, // Added description field
-                'status' => rand(0, 1), // Randomly Active or Inactive
+                'status' => 1, // Randomly Active or Inactive
             ]);
         }
     }

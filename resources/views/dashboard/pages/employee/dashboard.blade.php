@@ -41,7 +41,7 @@
 
         <!-- Sales Card -->
         <div class="col-md-6 col-lg-3">
-            <a href="{{route('sales.index')}}" class="text-decoration-none">
+            <a href="{{route('sales.create')}}" class="text-decoration-none">
                 <div class="card bg-dark border-success card-hover h-100">
                     <div class="card-body text-center py-4">
                         <i class="bi bi-cart-check-fill text-success mb-3" style="font-size: 2.5rem;"></i>

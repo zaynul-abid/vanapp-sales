@@ -13,12 +13,30 @@ use Illuminate\Support\Facades\Log;
 
 class SalesController extends Controller
 {
-    public function index(){
-        return view('dashboard.pages.components.sales.index');
+    public function index(Request $request)
+    {
+        // Build the query for SaleMaster with related models
+        $query = SaleMaster::with(['customer', 'user', 'van'])->whereNull('deleted_at');
+
+        // Apply search filter for bill number or customer name
+        $search = $request->input('search');
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('bill_no', 'LIKE', "%{$search}%")
+                    ->orWhereHas('customer', function ($q) use ($search) {
+                        $q->where('name', 'LIKE', "%{$search}%");
+                    });
+            });
+        }
+
+        // Paginate the results
+        $saleMasters = $query->paginate(10);
+
+        return view('dashboard.pages.components.sales.index', compact('saleMasters', 'search'));
     }
 
     public function create(){
-
+        return view('dashboard.pages.components.sales.create');
     }
     public function store(Request $request)
     {
@@ -256,8 +274,6 @@ class SalesController extends Controller
     public function updateBill(Request $request, $id)
 
     {
-
-
         return DB::transaction(function () use ($request, $id) {
             // Find the existing SaleMaster record
             $saleMaster = SaleMaster::findOrFail($id);
@@ -419,6 +435,36 @@ class SalesController extends Controller
             return redirect()->route('sales.index')->with('success', $message);
         });
     }
+
+    public function showSaleItem($saleMasterId)
+    {
+        $saleMaster = SaleMaster::with(['sales', 'customer', 'user', 'van'])->findOrFail($saleMasterId);
+        return view('dashboard.pages.components.sales.sales-items', compact('saleMaster'));
+    }
+
+    public function destroy($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            // Delete related records first
+            Sale::where('sale_master_id', $id)->delete();
+
+            // Then delete the main record
+            SaleMaster::findOrFail($id)->delete();
+
+            DB::commit();
+
+            return redirect()->route('sales.index')
+                ->with('success', 'Sale deleted successfully');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->route('sales.index')
+                ->with('error', 'Error deleting sale: '.$e->getMessage());
+        }
+    }
+
 
 
 

@@ -38,28 +38,36 @@
             border-bottom: 2px solid #007bff;
             padding-bottom: 5px;
         }
+        .top-items {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: #d4edda;
+            border-radius: 8px;
+        }
+        .top-items h3 {
+            color: #343a40;
+            border-bottom: 2px solid #28a745;
+            padding-bottom: 5px;
+        }
     </style>
 </head>
 <body>
 <div class="container">
+    <a href="{{ route('sales.index') }}" class="btn btn-primary mt-3">Back</a>
     <h1 class="mt-4 mb-4">Stock Report</h1>
 
     <!-- Filter Form -->
     <div class="filter-container">
         <form method="GET" action="{{ route('stock_report.index') }}" class="row g-3 align-items-end">
             <div class="col-md-3">
-                <label for="filter_type" class="form-label fw-bold">Filter By</label>
-                <select name="filter_type" id="filter_type" class="form-select" onchange="updateDatePicker()">
-                    <option value="">Select Filter</option>
-                    <option value="day" {{ $filterType == 'day' ? 'selected' : '' }}>Day</option>
-                    <option value="month" {{ $filterType == 'month' ? 'selected' : '' }}>Month</option>
-                    <option value="year" {{ $filterType == 'year' ? 'selected' : '' }}>Year</option>
-                </select>
+                <label for="start_date" class="form-label fw-bold">From Date</label>
+                <input type="text" name="start_date" id="start_date" class="form-control"
+                       placeholder="Select start date" value="{{ $startDate ?? '' }}">
             </div>
             <div class="col-md-3">
-                <label for="filter_value" class="form-label fw-bold">Select Date</label>
-                <input type="text" name="filter_value" id="filter_value" class="form-control"
-                       placeholder="Select date" value="{{ $filterValue ?? '' }}">
+                <label for="end_date" class="form-label fw-bold">To Date</label>
+                <input type="text" name="end_date" id="end_date" class="form-control"
+                       placeholder="Select end date" value="{{ $endDate ?? '' }}">
             </div>
             <div class="col-md-3">
                 <label for="search_item" class="form-label fw-bold">Search Item</label>
@@ -70,8 +78,36 @@
                 <button type="submit" class="btn btn-primary me-2">Apply Filter</button>
                 <a href="{{ route('stock_report.index') }}" class="btn btn-secondary">Clear Filter</a>
             </div>
+            <div class="col-12">
+                <a href="{{ route('stock_report.pdf') }}" class="btn btn-success">Export PDF</a>
+            </div>
         </form>
     </div>
+
+    <!-- Top Selling Items -->
+    @if($topItems->isNotEmpty())
+        <div class="top-items">
+            <h3>Top Selling Items</h3>
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Quantity Sold</th>
+                    <th>Total Amount</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach($topItems as $item)
+                    <tr>
+                        <td>{{ $item->item_name ?? 'N/A' }}</td>
+                        <td>{{ $item->quantity_sold }}</td>
+                        <td>{{ number_format($item->total_amount, 2) }}</td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
 
     <!-- Summary Statistics -->
     <div class="summary">
@@ -94,7 +130,7 @@
                     <th>Quantity Sold</th>
                     <th>Unit Price</th>
                     <th>Total Amount</th>
-                    <th>Sale Dates</th>
+                    <th>Action</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -104,7 +140,10 @@
                         <td>{{ $item->quantity_sold }}</td>
                         <td>{{ number_format($item->unit_price, 2) }}</td>
                         <td>{{ number_format($item->total_amount, 2) }}</td>
-                        <td>{{ implode(', ', $item->sale_dates) }}</td>
+                        <td>
+                            <a href="{{ route('stock_report.details', ['item_id' => $item->item_id]) }}"
+                               class="btn btn-info btn-sm">Details</a>
+                        </td>
                     </tr>
                 @endforeach
                 </tbody>
@@ -116,32 +155,15 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
 <script>
-    function updateDatePicker() {
-        const filterType = document.getElementById('filter_type').value;
-        const filterValueInput = document.getElementById('filter_value');
-        let dateFormat = "Y-m-d";
-        let enableTime = false;
-
-        if (filterType === 'day') {
-            dateFormat = "Y-m-d";
-        } else if (filterType === 'month') {
-            dateFormat = "Y-m";
-        } else if (filterType === 'year') {
-            dateFormat = "Y";
-        } else {
-            filterValueInput.value = '';
-            return;
-        }
-
-        flatpickr(filterValueInput, {
-            dateFormat: dateFormat,
-            enableTime: enableTime,
-            maxDate: "today",
-        });
-    }
-
     document.addEventListener('DOMContentLoaded', function() {
-        updateDatePicker();
+        flatpickr("#start_date", {
+            dateFormat: "Y-m-d",
+            maxDate: "today"
+        });
+        flatpickr("#end_date", {
+            dateFormat: "Y-m-d",
+            maxDate: "today"
+        });
     });
 </script>
 </body>
