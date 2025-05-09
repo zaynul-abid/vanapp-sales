@@ -42,7 +42,12 @@
 </head>
 <body>
 <div class="container">
-    <a href="{{ route('sales.index') }}" class="btn btn-primary mt-3">Back</a>
+    @if(auth()->user()->isEmployee())
+        <a href="{{ route('employee.dashboard') }}" class="btn btn-primary mt-3">Back</a>
+    @else
+        <a href="{{ route('reports.index') }}" class="btn btn-primary mt-3">Back</a>
+    @endif
+
     <h1 class="mt-4 mb-4">Van-Based Sale Report</h1>
 
     <!-- Filter Form -->

@@ -75,7 +75,9 @@ class ItemController extends Controller
             'type' => 'primary',
         ];
         ItemUnitDetail::create($itemUnitDetails);
-
+    if(auth()->user()->isEmployee()){
+        return redirect()->route('employee.dashboard')->with('success', 'Item created successfully.');
+    }else
         return redirect()->route('items.index')->with('success', 'Item created successfully.');
     }
 

@@ -168,7 +168,7 @@ class SalesController extends Controller
                 $message .= ' Warning: Some items are now in negative stock.';
             }
 
-            return redirect()->route('sales.index')->with('success', $message);
+            return redirect()->route('sales.create')->with('success', $message);
         });
     }
 
@@ -432,7 +432,7 @@ class SalesController extends Controller
                 $message .= ' Warning: Some items are now in negative stock.';
             }
 
-            return redirect()->route('sales.index')->with('success', $message);
+            return redirect()->route('sales.create')->with('success', $message);
         });
     }
 

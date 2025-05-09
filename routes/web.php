@@ -69,9 +69,9 @@ Route::middleware(['auth', 'usertype:employee'])->group(function () {
     Route::resource('sales', SalesController::class)->only([
         'index', 'create', 'store','destroy',
     ]);
-    Route::get('sales/search-bills', [SalesController::class, 'searchBills'])->name('sales.search-bills');
-    Route::get('sales/load-bill/{id}', [SalesController::class, 'loadBill'])->name('sales.load-bill');
-    Route::put('sales/update-bill/{id}', [SalesController::class, 'updateBill'])->name('sales.update-bill');
+    Route::get('/sales/search-bills', [SalesController::class, 'searchBills'])->name('sales.search-bills');
+    Route::get('/sales/load-bill/{id}', [SalesController::class, 'loadBill'])->name('sales.load-bill');
+    Route::put('/sales/update-bill/{id}', [SalesController::class, 'updateBill'])->name('sales.update-bill');
 
     Route::resource('customers', CustomerController::class);
 
@@ -82,6 +82,8 @@ Route::middleware(['auth', 'usertype:employee'])->group(function () {
     Route::get('/search-items', [ItemController::class,'searchItems'])->name('search.items');
 
     Route::get('/reports-index',[ReportController::class,'index'])->name('reports.index');
+
+    Route::get('/sale-report', [ReportController::class, 'saleReport'])->name('sale_report.index');
     Route::get('/reports/sale-item-details/{saleMasterId}',[ReportController::class,'showSaleItemDetails'])->name('showSale.item');
     Route::get('/sales-report/export-pdf',[ReportController::class,'salesReportPdf'])->name('sales-report.pdf');
 
@@ -100,6 +102,9 @@ Route::middleware(['auth', 'usertype:employee'])->group(function () {
     Route::get('/stock-report', [ReportController::class, 'stockReport'])->name('stock_report.index');
     Route::get('/stock-report/details/{item_id}', [ReportController::class, 'ShowStockDetails'])->name('stock_report.details');
     Route::get('/stock-report/pdf', [ReportController::class, 'stockReportPdf'])->name('stock_report.pdf');
+
+
+    Route::get('/employee/create-item', [\App\Http\Controllers\Employee\LoggedEmployeeController::class, 'createItem'])->name('employee.create-item');
 
 });
 
