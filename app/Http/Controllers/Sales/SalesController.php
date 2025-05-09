@@ -234,7 +234,13 @@ class SalesController extends Controller
         try {
             $saleMaster = SaleMaster::with(['sales', 'customer'])->findOrFail($id);
             return response()->json([
-                'master' => $saleMaster,
+                'master' => array_merge($saleMaster->toArray(), [
+                    'sale_date' => \Carbon\Carbon::parse($saleMaster->sale_date)->format('Y-m-d'),
+                    'sale_time' => \Carbon\Carbon::parse($saleMaster->sale_time)->format('H:i'),
+                    'customer' => $saleMaster->customer ? [
+                        'address' => $saleMaster->customer->address
+                    ] : null
+                ]),
                 'items' => $saleMaster->sales->map(function($item) {
                     // Fetch stock
                     $stock = \DB::table('item_unit_details')

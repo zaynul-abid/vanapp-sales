@@ -1239,11 +1239,13 @@
                 // Fill master details
                 const master = response.master;
 
-                $('#sale_date').val(master.sale_date);
-                $('#sale_time').val(master.sale_time);
+                // Set date and time
+                $('#sale_date').val(master.sale_date || '{{ now()->format('Y-m-d') }}');
+                $('#sale_time').val(master.sale_time || '{{ now()->format('H:i') }}');
+
                 $('#customer_id').val(master.customer_id);
                 $('#customer_name').val(master.customer_name);
-                $('#customer_address').val(response.master.customer.address || '');
+                $('#customer_address').val(response.master.customer?.address || '');
                 $('#payment_option').val(master.sale_type);
                 $('#discount').val(master.discount || '');
                 $('#narration').val(master.narration || '');
@@ -1271,7 +1273,6 @@
                 // Update form action to point to update route
                 $('form').attr('action', `/sales/update-bill/${billId}`);
                 $('form').attr('method', 'POST');
-                // Add method spoofing for PUT
                 $('form').find('input[name="_method"]').remove();
                 $('form').append('<input type="hidden" name="_method" value="PUT">');
 
@@ -1344,7 +1345,7 @@
         $('form').find('input[name="_method"]').remove();
         $('form button[type="submit"]').text('Save Sale');
 
-        // Clear all fields except date/time
+        // Clear all fields
         $('#customer_id').val('');
         $('#customer_name').val('');
         $('#customer_address').val('');
@@ -1357,6 +1358,8 @@
         $('#credit_amount').val('');
         $('#receivable_amount').val('');
         $('#item-rows').empty();
+        $('#sale_date').val('{{ now()->format('Y-m-d') }}');
+        $('#sale_time').val('{{ now()->format('H:i') }}');
 
         // Reset totals
         updateTotals();

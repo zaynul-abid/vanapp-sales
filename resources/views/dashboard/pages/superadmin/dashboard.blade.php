@@ -1,5 +1,5 @@
 @extends('dashboard.layouts.app')
-@section('title', 'Admin Dashboard')
+@section('title', 'Super-Admin Dashboard')
 
 @section('navbar')
     @include('dashboard.partials.sidebar.superadmin-sidebar')
